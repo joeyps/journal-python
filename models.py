@@ -694,4 +694,18 @@ def formatted_time(time, from_now=True):
         return "%d days ago" % (diff.days)
     else:
         return "%s %d" % (time.strftime("%b"), time.day)
+        
+class Event(BaseModel):
+    description = ndb.TextProperty()
+    photo = ndb.KeyProperty(kind=Photo)
+    event_time = ndb.DateTimeProperty(auto_now=True)
+    created_time = ndb.DateTimeProperty(auto_now_add=True)
+    updated_time = ndb.DateTimeProperty(auto_now=True)
     
+    def to_dict(self):
+        d = dict(
+            id=self.id,
+            description=self.description,
+            event_time=self.event_time.strftime(DATETIME_FORMAT)
+                )
+        return d

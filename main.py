@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import json
 import webapp2
 from webapp2_extras import sessions
 
@@ -142,8 +143,24 @@ class MainHandler(BaseHandler):
         
         template_values = dict(list(template_values.items()) + list(self.template_values.items()))    
         self.response.out.write(t.render(template_values))
+        
+class EventHandler(BaseHandler):
+    def post(self):
+        user = self.current_user
+        data = json.loads(self.request.get("data"))
+        if user:
+            e = Event(parent=User.parse_key(user['id']), description=data['desc'])
+            e.put()
+            return self.send_result(e.to_dict())
+        self.send_result(False)
+        
+class EventsHandler(BaseHandler):
+    def get(self):
+        pass
 
 app = webapp2.WSGIApplication([
+    ('/_api/event', EventHandler),
+    ('/_api/events', EventsHandler),
     ('/', MainHandler)
 ], debug=True
 , config=config)

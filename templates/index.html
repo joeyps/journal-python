@@ -9,14 +9,246 @@
 		<link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700' rel='stylesheet' type='text/css'>
 		<link href='/static/css/default.css' rel='stylesheet' type='text/css'>
 		<style type="text/css">
+		#main { 
+			max-width:760px; 
+			min-width:560px;
+			margin: 0 auto;
+		}
+		
+		#loading { 
+			text-align: center; 
+		}
+		
+		.buttons-main:after {
+			clear:both;
+			display:block;
+			content:" ";
+		}
+		
+		.buttons-mode {
+			text-align:right;
+		}
+		
+		#events {
+			margin-top:40px;
+		}
+		
+		.dlg {
+			position:fixed;
+			top:0;
+			bottom:0;
+			left:0;
+			right:0;
+			background-color:rgba(255, 255, 255, 0.5);
+		}
+		
+		.dlg .dlg-event-body {
+			width:500px;
+			margin: 20px auto;
+			padding:10px;
+			background-color:#fff;
+			border:1px solid #ccc;
+		}
+		
+		.dlg .dlg-event-body .buttons-tools {
+			float:left;
+		}
+		
+		.dlg .dlg-event-body .buttons-act {
+			text-align:right;
+		}
+		
+		.dlg .dlg-event-body .btn-icon svg {
+			fill:#3366e8;
+			opacity:0.3;
+		}
+		
+		.dlg .dlg-event-body .btn-icon svg:hover {
+			opacity:0.7;
+		}
+		
+		.dlg .dlg-event-body .btn-icon svg.active {
+			opacity:1;
+		}
+		
+		.dlg .dlg-event-body .btn-icon svg {
+			
+		}
+		
+		
+		.dlg .dlg-event-body .btn-icon .icon-photo {
+			width: 28px;
+			height: 28px;
+		}
 		
 		</style>
+		<script type="text/javascript" src="/static/js/date.format.js"></script>
 		<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
 		<script type="text/javascript">
+		core = {};
+		core.api = function() {
+			if(arguments.length < 2) {
+				return;
+			}
+	
+			var args = Array.prototype.slice.call(arguments);
+	
+			var path = "/_api" + args[0];
+			var method = args[1];
+	
+			var opt_argv = args.slice(2, args.length);
+	
+		    if (!opt_argv)
+		    opt_argv = new Array();
 
+		    // Find if the last arg is a callback function; save it
+		    var callback = null;
+		    var len = opt_argv.length;
+		    if (len > 0 && typeof opt_argv[len-1] === 'function') {
+		        callback = opt_argv[len-1];
+		        opt_argv.length--;
+		    }
+	
+			var params = null;
+			if(opt_argv.length > 0) {
+				params = opt_argv[0]
+			}
+	
+			var opts = {
+				url:path,
+				type:method
+			}
+	
+			if(params != null) {
+				opts['data'] = { data:JSON.stringify(params) };
+			}
+	
+			var that = this;
+			$.ajax(opts).done(function(response) {
+				var res = JSON.parse(response);
+				if(callback) {
+					callback(res);
+				}
+			}).fail(function(jqxhr, textStatus, errorThrown) {
+		
+			});
+		};
+		
+		function DialogEvent(view) {
+			var me = this;
+			me.view = view;
+			me.description = me.view.find(".dlg-event-desc");
+			me.date = me.view.find(".btn-date");
+			me.time = me.view.find(".btn-time");
+			me.photo = me.view.find(".btn-photo");
+			me.people = me.view.find(".btn-people");
+			me.place = me.view.find(".btn-place");
+			
+			me.view.click(function() {
+				me.dismiss();
+			});
+			
+			me.view.find(".dlg-event-body").click(function(e) {
+				e.stopPropagation();
+			});
+			
+			me.view.find(".btn-post").click(function() {
+				core.api("/event", "POST", { desc: me.description.html() }, function(res) {
+					if(res) {
+						me.dismiss();
+					}
+				});
+			});
+		}
+		
+		DialogEvent.prototype.setMode = function() {
+			
+		};
+		
+		DialogEvent.prototype.setDate = function(date) {
+			var me = this;
+			me.date.text(date.format("mmm d"));
+			me.time.text(date.format("h:MM TT"));
+			me.datetime = date;
+		};
+		
+		DialogEvent.prototype.setPhoto = function(photo) {
+			var me = this;
+			me.date.text(date.format("mmm d"));
+			me.time.text(date.format("h:MM TT"));
+			me.datetime = date;
+		};
+		
+		DialogEvent.prototype.show = function() {
+			this.view.show();
+		}
+		
+		DialogEvent.prototype.dismiss = function() {
+			this.view.hide();
+		}
+		
+		$(function() {
+			var dlgEvent = new DialogEvent($("#dlg_event"));
+			
+			$(".btn-new").click(function() {
+				dlgEvent.setMode('new');
+				dlgEvent.setDate(new Date());
+				dlgEvent.show();
+			});
+			
+			
+		});
 		</script>
     </head>
     <body>
-		
+		<div id="main">
+			<div class="buttons-main">
+				<button class="btn-new btn-post" style="float:left;">New Event</button>
+				<div class="buttons-mode"><button>Grid</button><button>Map</button></div>
+			</div>
+			<div id="events"></div>
+			<div id="empty">There is no any event yet. <br /><button class="btn-new btn-post">New Event</button></div>
+			<div id="loading" style="display:none;"><img src="/static/images/loading.gif" /></div>
+			<div id="map_canvas"></div>
+			<div id="dlg_event" class="dlg" style="display:none;">
+				<div class="dlg-event-body">
+					<div class="dlg-event-header">
+						<span class="btn-date"></span>
+						<span class="btn-time"></span>
+					</div>
+					<div class="dlg-event-desc editable" contenteditable="plaintext-only">
+					</div>
+					<div class="dlg-event-people">
+					</div>
+					<div class="dlg-event-photo">
+						<img />
+					</div>
+					<div class="dlg-event-place">
+					</div>
+					<div class="dlg-event-tags">
+					</div>
+					<div class="buttons">
+						<div class="buttons-tools">
+							<span class="btn-icon btn-photo">
+								<form>
+									<label>
+								<svg class="icon-photo" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" width="100.0px" height="100px" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve">
+								<path d="M480,80v352H32V80H480 M512,48H0v416h512V48L512,48z M448,240l-96-96L224,272l-96-64l-64,96v96h384V240z"/>
+								</svg>
+									<input type="file" />
+									</label>
+								</form>
+							</span>
+							<span class="btn-icon btn-people"></span>
+							<span class="btn-icon btn-place"></span>
+							<span class="btn-icon btn-tag"></span>
+						</div>
+						<div class="buttons-act">
+							<button class="btn-post">Done</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
     </body> 
 </html>
