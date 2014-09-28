@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<title>{% block title %}Journal{% endblock %}</title>
+		<meta name="description" content=""> 
+		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+		<meta http-equiv="pragma" content="no-cache" />
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+		<link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700' rel='stylesheet' type='text/css'>
+		<style type="text/css">
+			@font-face {
+			    font-family: JennaSue;
+			    src: url(/static/fonts/jenna_sue.ttf);
+			    font-weight:400;
+			}
+		
+			body {
+				font-family:"Open Sans",proxima_nova,"Helvetica Neue",Helvetica,Arial,sans-serif;
+				font-size:14px;
+				margin:0;
+			}
+			
+			#welcome {
+				background: transparent url("/static/images/cover.jpg") center top no-repeat;
+				background-size: cover;
+			}
+
+			#welcome-text {
+				min-height: 550px;
+				padding-top: 90px;
+				text-align: center;
+				margin: 0 auto;
+				max-width: 720px;
+				min-width: 296px;
+				color:white;
+			}
+			
+			#welcome-text h1 {
+				font-size:5em;
+				font-family:"JennaSue";
+			}
+			
+			#welcome-text h2 {
+				font-size:2em;
+			}
+			
+			#welcome-text h1, h2 {
+				display:block;
+			}
+			
+			.btn-signin {
+				display: inline-block;
+				background: #dd4b39;
+				color: white;
+				border-radius: 5px;
+				white-space: nowrap;
+				cursor:pointer;
+			}
+			
+			.btn-fb {
+				background: #4c66a4 !important;
+			}
+			
+			.btn-fb span.icon{
+				background: url('/static/images/fb_32.png') transparent 5px 50% no-repeat !important;
+			}
+			
+			.btn-signin span.icon {
+				background: url('/static/images/btn_g+_32.png') transparent 5px 50% no-repeat;
+				display: inline-block;
+				vertical-align: middle;
+				width: 35px;
+				height: 35px;
+				border-right: #bb3f30 1px solid;
+			}
+			
+			.btn-fb span.icon{
+				border-right: #364c7c 1px solid;
+			}
+			
+			.btn-signin span.buttonText {
+				display: inline-block;
+				vertical-align: middle;
+				padding-left: 30px;
+				padding-right: 30px;
+				font-size: 14px;
+				font-weight: bold;
+				font-family: 'Roboto',arial,sans-serif;
+			}
+		</style>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+		{% block head %}
+		<script type="text/javascript">
+		// This is called with the results from from FB.getLoginStatus().
+		function statusChangeCallback(response) {
+		// The response object is returned with a status field that lets the
+		// app know the current login status of the person.
+		// Full docs on the response object can be found in the documentation
+		// for FB.getLoginStatus().
+			if (response.status === 'connected') {
+				location.reload();
+			} else if (response.status === 'not_authorized') {
+				// The person is logged into Facebook, but not your app.
+				document.getElementById('status').innerHTML = 'Please log ' +
+				'into this app.';
+			} else {
+				// The person is not logged into Facebook, so we're not sure if
+				// they are logged into this app or not.
+				document.getElementById('status').innerHTML = 'Please log ' +
+				'into Facebook.';
+			}
+		}
+
+		// This function is called when someone finishes with the Login
+		// Button.  See the onlogin handler attached to it in the sample
+		// code below.
+		function checkLoginState() {
+			FB.getLoginStatus(function(response) {
+				statusChangeCallback(response);
+			});
+		}
+
+		window.fbAsyncInit = function() {
+			FB.init({
+				appId      : '{{ facebook_app_id }}',
+				cookie     : true,  // enable cookies to allow the server to access 
+				                // the session
+				xfbml      : true,  // parse social plugins on this page
+				version    : 'v2.0' // use version 2.0
+			});
+
+			// Now that we've initialized the JavaScript SDK, we call 
+			// FB.getLoginStatus().  This function gets the state of the
+			// person visiting this page and can return one of three states to
+			// the callback you provide.  They can be:
+			//
+			// 1. Logged into your app ('connected')
+			// 2. Logged into Facebook, but not your app ('not_authorized')
+			// 3. Not logged into Facebook and can't tell if they are logged into
+			//    your app or not.
+			//
+			// These three cases are handled in the callback function.
+
+			//checkLoginState();
+		
+		};
+
+		// Load the SDK asynchronously
+		(function(d, s, id) {
+			var js, fjs = d.getElementsByTagName(s)[0];
+			if (d.getElementById(id)) return;
+			js = d.createElement(s); js.id = id;
+			js.src = "//connect.facebook.net/en_US/sdk.js";
+			fjs.parentNode.insertBefore(js, fjs);
+		}(document, 'script', 'facebook-jssdk'));
+
+		// Here we run a very simple test of the Graph API after login is
+		// successful.  See statusChangeCallback() for when this call is made.
+		function testAPI() {
+			FB.api('/me', function(response) {
+			document.getElementById('status').innerHTML =
+				'Thanks for logging in, ' + response.name + '!';
+			});
+		}
+
+		$(function() {
+			$("#btnFbSignIn").click(function () {
+				FB.login(function(response) {
+					statusChangeCallback(response);
+				}, {scope: 'public_profile,email,user_friends'});
+			});
+		});
+
+		</script>
+		{% endblock %}
+    </head>
+    <body>
+		<noscript>
+			Javascript required
+		</noscript>
+
+	    <div id="content">
+			<div id="welcome">
+				<div id="welcome-text">
+					<div>
+						<h1>Journal</h1>
+						<h2>Just for personal.</h2>
+					</div>
+					<div>
+						<div id="btnFbSignIn" class="btn-signin btn-fb" data-gapiattached="true">
+							<span class="icon"></span>
+							<span class="buttonText">Sign In with Facebook</span>
+					    </div>
+						<div id="btnGpSignIn" class="btn-signin" data-gapiattached="true">
+							<span class="icon"></span>
+							<span class="buttonText">Sign In with Google</span>
+					    </div>
+					</div>
+				</div>
+			</div>
+	    </div>
+    </body> 
+</html>
