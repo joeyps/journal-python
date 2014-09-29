@@ -308,3 +308,97 @@ function format_time(time, from_now) {
         return time.format("mmm") + " " + time.getDate();
 	}
 }
+
+function UploadManager(opts) {
+	this.opts = opts;
+	this.onStart = opts.onStart;
+	this.done = opts.done;
+	this.progress = opts.progress;
+	this.current = 0;
+	this.num_uploaded = 0;
+	this.num_failed = 0;
+	this.isuploading = false;
+}
+
+UploadManager.prototype.start = function(files, to) {
+	var um = this;
+	if(um.isuploading || files.length <= 0)
+		return;
+	um.isuploading = true;
+	um.current = 0;
+	um.files = files;
+	um.num_uploaded = 0;
+	um.num_failed = 0;
+	um.total_size = um.files.length * 100;
+	um.uploaded_size = 0;
+	um.progress(files[0], um.current, um.files.length, 0);
+	um.onStart();
+	
+	function next() {
+		um.current++;
+		if(um.current < um.files.length) {
+			upload(files[um.current]);
+		} else {
+			um.isuploading = false;
+			um.done();
+		}
+	}
+	
+	function upload(file) {
+		var name = file.name;
+	    if(file.size > 100000000) {
+			//up to 100MB
+	        //alert("File is to big");
+			um.num_failed++;
+			next();
+	    }
+	    else if(!file.type.match(/image.*/)) {
+	        //alert("File doesnt match png, jpg or gif");
+			um.num_failed++;
+			next();
+	    }
+	    else { 
+            var formData = new FormData();
+			formData.append("files", file);
+            $.ajax({
+                url: to,  //server script to process data
+                type: 'POST',
+                xhr: function() {  // custom xhr
+                    var xhr = $.ajaxSettings.xhr();
+					xhr.addEventListener('progress', function(e) {
+				        var done = e.position || e.loaded, total = e.totalSize || e.total;
+				    }, false);
+				    if ( xhr.upload ) {
+				        xhr.upload.onprogress = function(e) {
+				            var done = e.position || e.loaded, total = e.totalSize || e.total;
+							var progress = Math.floor(done/total*100);
+							um.opts.fileprogress(um.current, file, progress);
+							um.progress(file, um.num_uploaded, um.files.length, ((um.num_uploaded * 100.0 + progress) / um.total_size) * 100);
+				        };
+				    }
+                    return xhr;
+                },
+                // Form data
+                data: formData,
+                //Options to tell JQuery not to process data or worry about content-type
+                cache: false,
+                contentType: false,
+                processData: false
+            })
+			.done(function(response){ 
+				response = JSON.parse(response);
+				um.num_uploaded++;
+				um.progress(file, um.num_uploaded, um.files.length, (um.num_uploaded * 100.0 / um.total_size) * 100);
+				um.opts.uploaded(um.current, file, response);
+				next();
+			})
+			.fail(function(jqxhr, textStatus, errorThrown) { 
+				um.num_failed++;
+				next();
+			});
+	    }
+	}
+	
+	upload(um.files[um.current]);
+	
+};

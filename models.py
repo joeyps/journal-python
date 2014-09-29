@@ -408,17 +408,14 @@ class DayOfJourney(BaseModel):
         return d  
         
 class Photo(BaseModel):
-    description = ndb.TextProperty()
     #custom_time = ndb.DateTimeProperty()
     width = ndb.IntegerProperty(required=True)
     height = ndb.IntegerProperty(required=True)
     blob = ndb.BlobKeyProperty()
     thumb_url = ndb.StringProperty(indexed=False)
-    location = ndb.GeoPtProperty()
-    place = ndb.JsonProperty()
     exif = ndb.JsonProperty()
-    num_comments = ndb.IntegerProperty(default=0)
     utc = ndb.DateTimeProperty()
+    draft = ndb.BooleanProperty(default=True)
     original_time = ndb.DateTimeProperty()
     created_time = ndb.DateTimeProperty(auto_now_add=True)
     updated_time = ndb.DateTimeProperty(auto_now=True)
@@ -437,27 +434,13 @@ class Photo(BaseModel):
     def is_owner(self, uid):
         return self.key.parent().parent().integer_id() == uid
     
-    def post_comment(self, uid, content):
-        @ndb.transactional
-        def do_transaction():
-            c = Comment.post(self.key, User.parse_key(uid), content)
-            self.num_comments += 1
-            self.put()
-            return c
-        try:
-            return do_transaction()
-        except db.TransactionFailedError():
-            return False
-    
     def to_dict(self):
         d = dict(id=self.id,
-                description=self.description,
                 width=self.width,
                 height=self.height,
                 original_time=self.original_time.strftime(DATETIME_FORMAT),
                 utc=self.utc.strftime(DATETIME_FORMAT),
-                thumb_url=self.thumb_url,
-                place=self.place
+                thumb_url=self.thumb_url
                 )
         return d
         
@@ -706,6 +689,7 @@ class Event(BaseModel):
         d = dict(
             id=self.id,
             description=self.description,
+            photo=self.photo.get().to_dict() if self.photo else None,
             event_time=self.event_time.strftime(DATETIME_FORMAT)
                 )
         return d

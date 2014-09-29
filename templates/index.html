@@ -31,6 +31,16 @@
 		
 		#events {
 			margin-top:40px;
+			text-align:left;
+		}
+		
+		#events .event {
+			background-color:#ccc;
+			display:inline-block;
+			width:150px;
+			height:150px;
+			margin-right:3px;
+			margin-bottom:3px;
 		}
 		
 		.dlg {
@@ -40,6 +50,7 @@
 			left:0;
 			right:0;
 			background-color:rgba(255, 255, 255, 0.5);
+			overflow-y:scroll;
 		}
 		
 		.dlg .dlg-event-body {
@@ -59,15 +70,16 @@
 		}
 		
 		.dlg .dlg-event-body .btn-icon svg {
-			fill:#3366e8;
-			opacity:0.3;
-		}
-		
-		.dlg .dlg-event-body .btn-icon svg:hover {
+			fill:#ccc;
 			opacity:0.7;
 		}
 		
-		.dlg .dlg-event-body .btn-icon svg.active {
+		.dlg .dlg-event-body .btn-icon svg:hover {
+			opacity:1;
+		}
+		
+		.dlg .dlg-event-body .btn-icon.active svg {
+			fill:#dd4b39;
 			opacity:1;
 		}
 		
@@ -81,9 +93,41 @@
 			height: 28px;
 		}
 		
+		.dlg .dlg-event-photo {
+			background-color:#ccc;
+			height:200px;
+			position:relative;
+		}
+		
+		.dlg .dlg-event-photo img {
+			height:100%;
+		}
+		
+		.dlg .dlg-event-body .progressbar {
+			display:inline-block;
+			position: absolute;
+			top:50%;
+			left: 30px;
+			right: 30px;
+		}
+	
+		.progressbar {
+			background-color: #e5e5e5;
+			height: 4px;
+		}
+	
+		.progressbar .progress {
+			height: 2px;
+			border: 1px solid #edba3d;
+			background-color: #f8bd34;
+			width:0%;
+			position: absolute;
+		}
+		
 		</style>
 		<script type="text/javascript" src="/static/js/date.format.js"></script>
 		<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+		<script type="text/javascript" src="/static/js/core.js"></script>
 		<script type="text/javascript">
 		core = {};
 		core.api = function() {
@@ -134,15 +178,62 @@
 			});
 		};
 		
-		function DialogEvent(view) {
+		function Events(view, empty, loading) {
+			var me  = this;
+			me.view = view;
+			me.empty = empty;
+			me.loading = loading;
+		}
+		
+		Events.prototype.fetch = function() {
+			var me = this;
+			me.view.html("");
+			me.loading.show();
+			core.api("/events", "GET", function(res) {
+				if (res) {
+					if (res.length > 0) {
+						me.empty.hide();
+						for (var i in res) {
+							var e = res[i];
+							var eventView = $("<div class='event'></div>").appendTo(me.view);
+							eventView.attr("key", e.id);
+							if (e.photo)
+								eventView.css("background-image", "url(" + e.photo.thumb_url + "200)")
+						}
+					} else {
+						me.empty.show();
+					}
+				}
+				me.loading.hide();
+			});
+		};
+		
+		function ProgressBar(view) {
 			var me = this;
 			me.view = view;
-			me.description = me.view.find(".dlg-event-desc");
+			me.progress = me.view.find(".progress");
+		}
+		
+		ProgressBar.prototype.setProgress = function(value) {
+			var me = this;
+			me.progress.css({ width:value + "%" });
+		};
+		
+		function DialogEvent(view, opts) {
+			var me = this;
+			me.opts = opts;
+			me.view = view;
+			me.desc = me.view.find(".dlg-event-desc");
 			me.date = me.view.find(".btn-date");
 			me.time = me.view.find(".btn-time");
-			me.photo = me.view.find(".btn-photo");
+			me.btnPhoto = me.view.find(".btn-photo");
+			me.filePhoto = me.btnPhoto.find(".file-photo");
 			me.people = me.view.find(".btn-people");
 			me.place = me.view.find(".btn-place");
+			me.photo = me.view.find(".dlg-event-photo");
+			me.image = me.photo.find("img");
+			me.progressbar = new ProgressBar(me.photo.find(".progressbar"));
+			me.btnPost = me.view.find(".btn-post");
 			
 			me.view.click(function() {
 				me.dismiss();
@@ -152,17 +243,57 @@
 				e.stopPropagation();
 			});
 			
-			me.view.find(".btn-post").click(function() {
-				core.api("/event", "POST", { desc: me.description.html() }, function(res) {
+			me.btnPost.click(function() {
+				core.api("/event", "POST", { desc: me.desc.html(), pid:me.photo.attr("key") }, function(res) {
 					if(res) {
 						me.dismiss();
+						if (me.opts.onEventAdded) {
+							me.opts.onEventAdded(res);
+						}
 					}
 				});
 			});
+			
+			me.um = new UploadManager({
+				onStart:function() {
+					me.photo.show();
+					me.image.hide();
+					me.progressbar.view.show();
+					me.progressbar.setProgress(0);
+					me.btnPost.attr("disabled", "disabled");
+				},
+				progress:function(file, uploaded, total, percentage) {
+
+				},
+				fileprogress:function(i, file, progress) {
+					me.progressbar.setProgress(progress);
+				},
+				uploaded:function(i, file, res) {
+					if(res) {
+						me.image.show();
+						me.image.attr("src", res.thumb_url + "400");
+						me.progressbar.view.hide();
+						me.photo.attr("key", res.id);
+					}
+				},
+				done:function() {
+					me.btnPhoto.addClass("active");
+					me.btnPost.removeAttr("disabled");
+				}
+			});
+			
+			me.filePhoto.change(function() {
+				me.um.start(this.files, "/_api/photo");
+			});
 		}
 		
-		DialogEvent.prototype.setMode = function() {
-			
+		DialogEvent.prototype.setMode = function(mode) {
+			var me = this;
+			if (mode == 'new') {
+				me.desc.html("");
+				me.photo.hide();
+				me.btnPhoto.removeClass("active");
+			}
 		};
 		
 		DialogEvent.prototype.setDate = function(date) {
@@ -188,7 +319,12 @@
 		}
 		
 		$(function() {
-			var dlgEvent = new DialogEvent($("#dlg_event"));
+			var events = new Events($("#events"), $("#empty"), $("#loading"));
+			var dlgEvent = new DialogEvent($("#dlg_event"), {
+				onEventAdded:function() {
+					events.fetch();
+				}
+			});
 			
 			$(".btn-new").click(function() {
 				dlgEvent.setMode('new');
@@ -197,6 +333,7 @@
 			});
 			
 			
+			events.fetch();
 		});
 		</script>
     </head>
@@ -207,7 +344,9 @@
 				<div class="buttons-mode"><button>Grid</button><button>Map</button></div>
 			</div>
 			<div id="events"></div>
-			<div id="empty">There is no any event yet. <br /><button class="btn-new btn-post">New Event</button></div>
+			<div id="empty" style="display:none;">
+				There is no any event yet. <br /><button class="btn-new btn-post">New Event</button>
+			</div>
 			<div id="loading" style="display:none;"><img src="/static/images/loading.gif" /></div>
 			<div id="map_canvas"></div>
 			<div id="dlg_event" class="dlg" style="display:none;">
@@ -222,6 +361,7 @@
 					</div>
 					<div class="dlg-event-photo">
 						<img />
+						<div class="progressbar"><div class="progress"></div></div>
 					</div>
 					<div class="dlg-event-place">
 					</div>
@@ -235,7 +375,7 @@
 								<svg class="icon-photo" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" width="100.0px" height="100px" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve">
 								<path d="M480,80v352H32V80H480 M512,48H0v416h512V48L512,48z M448,240l-96-96L224,272l-96-64l-64,96v96h384V240z"/>
 								</svg>
-									<input type="file" />
+									<input class="file-photo" type="file" />
 									</label>
 								</form>
 							</span>

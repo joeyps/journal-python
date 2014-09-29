@@ -18,8 +18,13 @@ import json
 import webapp2
 from webapp2_extras import sessions
 
+from google.appengine.api import images
+from google.appengine.ext import blobstore
+
 import facebook
+import gcs
 from models import *
+import utils
 
 from jinja2 import Template
 from jinja2 import FileSystemLoader
@@ -33,6 +38,8 @@ FACEBOOK_APP_SECRET = "4a2250bfce16f1a9c110038ace5f464f"
 
 config = {}
 config['webapp2_extras.sessions'] = dict(secret_key='4a2250bfce16f1a9c110038ace5f464f')
+
+PHOTO_MAX_SIZE = 2560
 
 class BaseHandler(webapp2.RequestHandler):
     def __init__(self, request, response):
@@ -128,7 +135,7 @@ class BaseHandler(webapp2.RequestHandler):
         """
         return self.session_store.get_session()
         
-    def send_result(self, obj):
+    def send_json(self, obj):
         self.response.out.write(json.dumps(obj))
 
 class MainHandler(BaseHandler):
@@ -149,18 +156,117 @@ class EventHandler(BaseHandler):
         user = self.current_user
         data = json.loads(self.request.get("data"))
         if user:
-            e = Event(parent=User.parse_key(user['id']), description=data['desc'])
+            e = Event(parent=User.parse_key(user['id']))
+            if data['desc']:
+                e.description = data['desc']
+            if data['pid']:
+                photo = Photo.from_id(data['pid'])
+                if photo:
+                    photo.draft = False
+                    photo.put()
+                    e.photo = photo.key
             e.put()
-            return self.send_result(e.to_dict())
-        self.send_result(False)
+            return self.send_json(e.to_dict())
+        self.send_json(False)
         
 class EventsHandler(BaseHandler):
     def get(self):
-        pass
+        user = self.current_user
+        if user:
+            q = Event.query(ancestor=User.parse_key(user['id'])).order(-Event.event_time)
+            events = [r.to_dict() for r in q]
+            return self.send_json(events)
+        self.send_json(False)
+        
+class PhotoHandler(BaseHandler):
+    
+    @utils.timing
+    def post(self):
+        user = self.current_user
+        if not user:
+            self.error(403)
+            return
+        upload_files = self.request.POST.getall('files')
+        for file in upload_files:
+            """ @utils.timing
+            def parse_exif_by_pil(file):
+                image = Image.open(StringIO.StringIO(file.value))
+                original_exif = image._getexif()
+                exif = {}
+                for key, value in EXIF_TAGS.items():
+                    exif[key] = original_exif[value]
+                logging.info(exif)
+            parse_exif_by_pil(file)"""
+            #dummy transforms for getting exif
+            
+            @utils.timing
+            def read_image(file_content):
+                img = images.Image(file_content)
+                img.resize(100, 100)
+                img.execute_transforms(parse_source_metadata=True)
+                return img
+            img = read_image(file.value)
+            w = img.width
+            h = img.height
+            exif = img.get_original_metadata()
+            logging.info(exif)
+            
+            #real transforms
+            @utils.timing
+            def resize_image(file_content):
+                return images.resize(file_content, PHOTO_MAX_SIZE, PHOTO_MAX_SIZE, output_encoding=images.JPEG, correct_orientation=images.CORRECT_ORIENTATION)
+            imgfile = resize_image(file.value)
+            
+            @utils.timing
+            @ndb.transactional
+            def do_transaction():
+                photo = Photo(width=w, height=h, exif=exif)
+                PhotoHandler.apply_exif_for_photo(photo, exif)
+                photo.put()            
+                return photo
+                
+            photo = do_transaction()
+
+            filename = "%s/%d" % (user['id'], photo.id)
+            blob_key = gcs.create_file(filename, imgfile)
+            
+            @utils.timing
+            def get_serving_url(blob_key):
+                url = images.get_serving_url(blob_key, size=images.IMG_SERVING_SIZES_LIMIT, secure_url=True)            
+                return url.replace("=s%d" % (images.IMG_SERVING_SIZES_LIMIT) , "=s")
+                
+            url = get_serving_url(blob_key)
+            photo.blob = blob_key
+            photo.thumb_url = url
+            photo.put()
+
+            self.send_json(photo.to_dict())
+            return
+        self.send_json(False)
+        
+    @staticmethod
+    def apply_exif_for_photo(photo, exif):
+        original_time = datetime.strptime(exif['DateTimeDigitized'], "%Y:%m:%d %H:%M:%S")     
+        with_gps_tag = 'GPSDateStamp' in exif and 'GPSTimeStamp' in exif
+        utc = None
+        if with_gps_tag:
+            utc = datetime.strptime(exif['GPSDateStamp'], "%Y:%m:%d")     
+            hour = int(str(exif['GPSTimeStamp']).split(":")[0])
+            utc = utc.replace(hour=hour, minute=original_time.minute, second=original_time.second)
+        else:
+            utc = original_time
+        photo.utc = utc
+        photo.original_time = original_time
+        
+        if 'GPSLatitude' in exif and 'GPSLongitude' in exif:
+            photo.location = ndb.GeoPt(exif['GPSLatitude'], exif['GPSLongitude'])
+        photo.exif = exif
+            
 
 app = webapp2.WSGIApplication([
     ('/_api/event', EventHandler),
     ('/_api/events', EventsHandler),
+    ('/_api/photo', PhotoHandler),
     ('/', MainHandler)
 ], debug=True
 , config=config)
