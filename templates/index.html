@@ -76,6 +76,12 @@
 			position:relative;
 		}
 		
+		.dlg .dlg-event-body .buttons:after {
+			clear:both;
+			content:" ";
+			display:block;
+		}
+		
 		.dlg .dlg-event-body .buttons-tools {
 			float:left;
 		}
@@ -137,12 +143,16 @@
 		
 		.dlg .dlg-event-photo {
 			background-color:#ccc;
-			height:200px;
+			min-height:200px;
+			max-height:400px;
 			position:relative;
+			text-align:center;
 		}
 		
 		.dlg .dlg-event-photo img {
-			height:100%;
+			display:inline-block;
+			max-height:100%; 
+			max-width:100%;
 		}
 		
 		.dlg .dlg-event-body .progressbar {
@@ -259,7 +269,7 @@
 							eventView.append("<div class='date'><div class='month'>" + date.format("mmm").toUpperCase() + "</div>" + 
 											"<div class='day'>" + date.format("d") + "</div></div>")
 							if (e.photo)
-								eventView.css("background-image", "url(" + e.photo.thumb_url + "200)")
+								eventView.css("background-image", "url(" + e.photo.thumb_url + "300)")
 						}
 					} else {
 						me.empty.show();
@@ -361,6 +371,8 @@
 				me.btnPost.show();
 			} else {
 				me.loading.show();
+				me.photo.hide();
+				me.btnPhoto.removeClass("active");
 				me.btnPost.hide();
 				core.api("/event/" + mode, "GET", function(res) {
 					if (res) {
@@ -383,8 +395,10 @@
 		
 		DialogEvent.prototype.setPhoto = function(photo) {
 			var me = this;
+			me.btnPhoto.addClass("active");
+			me.photo.show();
 			me.image.show();
-			me.image.attr("src", photo.thumb_url + "400");
+			me.image.attr("src", photo.thumb_url + "600");
 			me.progressbar.view.hide();
 			me.photo.attr("key", photo.id);
 		};
