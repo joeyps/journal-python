@@ -153,6 +153,14 @@ class MainHandler(BaseHandler):
         self.response.out.write(t.render(template_values))
         
 class EventHandler(BaseHandler):
+    def get(self, id):
+        user = self.current_user
+        if user and id:
+            e = Event.from_id(id, parent=user['id'])
+            if e:
+                return self.send_json(e.to_dict())
+        self.send_json(False)
+        
     def post(self):
         user = self.current_user
         data = json.loads(self.request.get("data"))
@@ -265,6 +273,7 @@ class PhotoHandler(BaseHandler):
             
 
 app = webapp2.WSGIApplication([
+    ('/_api/event/([^/]+)?', EventHandler),
     ('/_api/event', EventHandler),
     ('/_api/events', EventsHandler),
     ('/_api/photo', PhotoHandler),

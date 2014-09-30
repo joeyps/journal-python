@@ -685,6 +685,10 @@ class Event(BaseModel):
     created_time = ndb.DateTimeProperty(auto_now_add=True)
     updated_time = ndb.DateTimeProperty(auto_now=True)
     
+    @classmethod        
+    def _get_parent_cls(cls):
+        return User      
+    
     def to_dict(self):
         d = dict(
             id=self.id,

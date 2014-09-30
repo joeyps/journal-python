@@ -36,6 +36,7 @@
 		
 		#events .event {
 			background-color:#ccc;
+			background-size:cover;
 			display:inline-block;
 			width:150px;
 			height:150px;
@@ -59,6 +60,7 @@
 			padding:10px;
 			background-color:#fff;
 			border:1px solid #ccc;
+			position:relative;
 		}
 		
 		.dlg .dlg-event-body .buttons-tools {
@@ -110,6 +112,14 @@
 			left: 30px;
 			right: 30px;
 		}
+		
+		.dlg .dlg-event-body .dlg-event-loading {
+			position:absolute;
+			top:50%;
+			left:0;
+			right:0;
+			text-align:center;
+		}
 	
 		.progressbar {
 			background-color: #e5e5e5;
@@ -129,7 +139,9 @@
 		<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
 		<script type="text/javascript" src="/static/js/core.js"></script>
 		<script type="text/javascript">
-		core = {};
+		core = {
+			timezone:(-new Date().getTimezoneOffset()/60),
+		};
 		core.api = function() {
 			if(arguments.length < 2) {
 				return;
@@ -178,11 +190,17 @@
 			});
 		};
 		
-		function Events(view, empty, loading) {
+		function Events(view, empty, loading, opts) {
 			var me  = this;
+			me.opts = opts;
 			me.view = view;
 			me.empty = empty;
 			me.loading = loading;
+			me.view.on("click", ".event", function() {
+				if(me.opts.onItemClick) {
+					me.opts.onItemClick($(this).attr("key"));
+				}
+			});
 		}
 		
 		Events.prototype.fetch = function() {
@@ -234,6 +252,7 @@
 			me.image = me.photo.find("img");
 			me.progressbar = new ProgressBar(me.photo.find(".progressbar"));
 			me.btnPost = me.view.find(".btn-post");
+			me.loading = me.view.find(".dlg-event-loading");
 			
 			me.view.click(function() {
 				me.dismiss();
@@ -274,10 +293,7 @@
 				},
 				uploaded:function(i, file, res) {
 					if(res) {
-						me.image.show();
-						me.image.attr("src", res.thumb_url + "400");
-						me.progressbar.view.hide();
-						me.photo.attr("key", res.id);
+						me.setPhoto(res);
 					}
 				},
 				done:function() {
@@ -297,6 +313,20 @@
 				me.desc.html("");
 				me.photo.hide();
 				me.btnPhoto.removeClass("active");
+				me.loading.hide();
+				me.btnPost.show();
+			} else {
+				me.loading.show();
+				me.btnPost.hide();
+				core.api("/event/" + mode, "GET", function(res) {
+					if (res) {
+						me.desc.html(res.description);
+						me.setDate(strptime(res.event_time, core.timezone));
+						if (res.photo)
+							me.setPhoto(res.photo);
+					}
+					me.loading.hide();
+				});
 			}
 		};
 		
@@ -309,9 +339,10 @@
 		
 		DialogEvent.prototype.setPhoto = function(photo) {
 			var me = this;
-			me.date.text(date.format("mmm d"));
-			me.time.text(date.format("h:MM TT"));
-			me.datetime = date;
+			me.image.show();
+			me.image.attr("src", photo.thumb_url + "400");
+			me.progressbar.view.hide();
+			me.photo.attr("key", photo.id);
 		};
 		
 		DialogEvent.prototype.show = function() {
@@ -323,8 +354,14 @@
 		}
 		
 		$(function() {
-			var events = new Events($("#events"), $("#empty"), $("#loading"));
-			var dlgEvent = new DialogEvent($("#dlg_event"), {
+			var dlgEvent = null;
+			var events = new Events($("#events"), $("#empty"), $("#loading"), {
+				onItemClick:function(id) {
+					dlgEvent.setMode(id);
+					dlgEvent.show();
+				}
+			});
+			dlgEvent = new DialogEvent($("#dlg_event"), {
 				onEventAdded:function() {
 					events.fetch();
 				}
@@ -391,6 +428,7 @@
 							<button class="btn-post">Done</button>
 						</div>
 					</div>
+					<div class="dlg-event-loading" style="display:none;"><img src="/static/images/loading.gif" /></div>
 				</div>
 			</div>
 		</div>
