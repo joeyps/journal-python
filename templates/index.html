@@ -35,13 +35,26 @@
 		}
 		
 		#events .event {
+			position:relative;
 			background-color:#ccc;
 			background-size:cover;
 			display:inline-block;
-			width:150px;
-			height:150px;
+			width:170px;
+			height:170px;
 			margin-right:3px;
 			margin-bottom:3px;
+		}
+		
+		#events .event .date {
+			position:absolute;
+			left:10px;
+			bottom:8px;
+			color:#fff;
+		}
+		
+		#events .event .date .day {
+			font-size:24px;
+			text-align:center;
 		}
 		
 		.dlg {
@@ -71,6 +84,14 @@
 			text-align:right;
 		}
 		
+		.dlg .dlg-event-body .btn-icon {
+			width:30px;
+			height:30px;
+			display: inline-block;
+			vertical-align: middle;
+			margin-right: 18px;
+		}
+		
 		.dlg .dlg-event-body .btn-icon svg {
 			fill:#ccc;
 			opacity:0.7;
@@ -86,13 +107,32 @@
 		}
 		
 		.dlg .dlg-event-body .btn-icon svg {
-			
+			display:inline-block;
 		}
 		
 		
 		.dlg .dlg-event-body .btn-icon .icon-photo {
 			width: 28px;
 			height: 28px;
+		}
+		
+		.dlg .dlg-event-body .btn-icon .icon-people {
+			width: 24px;
+			height: 24px;
+			margin-top: 2px;
+			margin-left: 7px;
+		}
+		
+		.dlg .dlg-event-body .btn-icon .icon-marker {
+			width: 30px;
+			height: 30px;
+		}
+		
+		.dlg .dlg-event-body .btn-icon .icon-tag {
+			width: 20px;
+			height: 20px;
+			padding-top: 5px;
+			padding-left: 2px;
 		}
 		
 		.dlg .dlg-event-photo {
@@ -213,8 +253,11 @@
 						me.empty.hide();
 						for (var i in res) {
 							var e = res[i];
+							var date = strptime(e.event_time, core.timezone);
 							var eventView = $("<div class='event'></div>").appendTo(me.view);
 							eventView.attr("key", e.id);
+							eventView.append("<div class='date'><div class='month'>" + date.format("mmm").toUpperCase() + "</div>" + 
+											"<div class='day'>" + date.format("d") + "</div></div>")
 							if (e.photo)
 								eventView.css("background-image", "url(" + e.photo.thumb_url + "200)")
 						}
@@ -312,6 +355,7 @@
 			if (mode == 'new') {
 				me.desc.html("");
 				me.photo.hide();
+				me.photo.attr("key", "");
 				me.btnPhoto.removeClass("active");
 				me.loading.hide();
 				me.btnPost.show();
@@ -411,7 +455,7 @@
 					<div class="buttons">
 						<div class="buttons-tools">
 							<span class="btn-icon btn-photo">
-								<form>
+								<form style="display: inline-block;">
 									<label>
 								<svg class="icon-photo" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" width="100.0px" height="100px" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve">
 								<path d="M480,80v352H32V80H480 M512,48H0v416h512V48L512,48z M448,240l-96-96L224,272l-96-64l-64,96v96h384V240z"/>
@@ -420,9 +464,39 @@
 									</label>
 								</form>
 							</span>
-							<span class="btn-icon btn-people"></span>
-							<span class="btn-icon btn-place"></span>
-							<span class="btn-icon btn-tag"></span>
+							<span class="btn-icon">
+								<svg class="icon-people" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
+								<g>
+									<path d="M78.685,56.269l-0.013-3.177c4.492,0.587,13.649-2.684,13.649-2.684c-3.104-3.174-3.806-6.879-5.844-21.417   C84.44,14.452,71.805,14.588,70.854,14.588S57.267,14.452,55.229,28.99c-2.038,14.538-2.74,18.243-5.843,21.417   c0,0,9.157,3.271,13.649,2.684l-0.013,3.177c-2.305,2.527-5.047,4.457-7.783,6.102c0.896,0.508,1.785,0.999,2.649,1.473   c6.106,3.35,11.874,6.513,11.874,12.85v6.926h28.4c0.975,0,1.765-0.791,1.765-1.766v-7.94   C99.928,66.631,86.677,65.033,78.685,56.269z"/>
+								</g>
+								<path d="M99.843,73.97v7.94"/>
+								<path d="M43.186,57.071L43.186,57.071v-2.551c2.317-2.701,4.064-5.818,5.253-9.45  c0.169-0.519,0.328-1.048,0.474-1.587c1.214-0.623,2.202-2.282,2.424-4.317c0.075-0.677,0.059-1.331-0.035-1.936  c-0.158-1.007-0.531-1.874-1.053-2.472c0.104-1.927,0.108-3.963,0.018-6.109c-0.07-1.669-0.197-3.404-0.388-5.216  c-0.047-0.448-0.107-0.878-0.179-1.295c-1.807-10.416-11.285-11.445-14.886-11.454c-0.144-0.001-2.636-0.001-2.78,0  c-3.601,0.008-13.079,1.038-14.886,11.454c-0.072,0.417-0.132,0.848-0.179,1.295c-0.19,1.812-0.316,3.546-0.388,5.216  c-0.091,2.146-0.087,4.183,0.018,6.109c-0.523,0.598-0.896,1.465-1.052,2.472c-0.095,0.605-0.111,1.259-0.037,1.936  c0.224,2.035,1.21,3.695,2.425,4.317c0.294,1.08,0.633,2.116,1.019,3.112c1.155,2.989,2.723,5.609,4.709,7.925v2.55v0.001  C14.775,66.818,0.084,68.594,0.084,76.692v8.828c0,1.084,0.878,1.964,1.963,1.964h62.753c1.084,0,1.962-0.88,1.962-1.964v-8.828  C66.763,68.594,52.072,66.818,43.186,57.071z"/>
+								</svg>
+							</span>
+							<span class="btn-icon">
+								<svg class="icon-marker" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
+								<g id="Layer_7" display="none">
+									<path display="inline" d="M84.938,26.044H15.062c-0.547,0-0.998,0.446-0.998,0.997v45.916c0,0.553,0.451,0.999,0.998,0.999h69.875   c0.555,0,0.998-0.446,0.998-0.999V27.041C85.936,26.49,85.492,26.044,84.938,26.044z M83.777,46.589H16.23v-9.98h67.547V46.589z"/>
+								</g>
+								<g id="Your_Icon" display="none">
+									<path display="inline" d="M85.98,37.144c0-10.476-8.258-18.719-18.434-18.719c-8.217,0-15.168,5.661-17.549,13.31   c-2.383-7.648-9.334-13.113-17.551-13.113c-10.178,0-18.428,8.008-18.428,18.488c0,5.288,2.107,9.024,5.498,13.022h-0.049   l30.547,31.442l30.543-31.442h-0.08C83.871,46.134,85.98,42.428,85.98,37.144z"/>
+								</g>
+								<g id="Layer_6">
+									<path d="M50,14.064c-13.23,0-23.957,10.726-23.957,23.957C26.043,51.25,50,85.936,50,85.936S73.957,51.25,73.957,38.021   C73.957,24.79,63.229,14.064,50,14.064z M50,50.497c-6.617,0-11.979-5.359-11.979-11.977c0-6.616,5.361-11.978,11.979-11.978   c6.613,0,11.979,5.362,11.979,11.978C61.979,45.138,56.613,50.497,50,50.497z"/>
+								</g>
+								<g id="Layer_5" display="none">
+									<polygon display="inline" points="85.982,32.037 85.982,14.051 85.982,14.047 67.993,14.047 67.993,14.047 26.013,14.047    26.013,32.037 50.971,32.037 14.018,68.99 30.98,85.953 67.993,48.942 67.993,74.017 85.982,74.017 85.982,32.037  "/>
+								</g>
+								<g id="Layer_4" display="none">
+									<polygon display="inline" points="62.011,14.107 38.022,14.107 54.017,38.097 14.034,38.097 14.034,62.082 54.015,62.082    38.022,86.071 62.011,86.071 86,50.087  "/>
+								</g>
+								</svg>
+							</span>
+							<span class="btn-icon">
+							<svg class="icon-tag" xmlns="http://www.w3.org/2000/svg" version="1.1" width="32" height="32" data-icon="tag" viewBox="0 0 32 32">
+							  <path d="M.5 0c-.3 0-.5.2-.5.5v11c0 .3.206.706.406.906l19.281 19.281c.14.14.33.182.5.125h.031l11.594-11.594c.005-.011-.004-.02 0-.031.057-.17.015-.36-.125-.5l-19.281-19.281c-.2-.2-.606-.406-.906-.406h-11zm6 4c1.4 0 2.5 1.1 2.5 2.5s-1.1 2.5-2.5 2.5-2.5-1.1-2.5-2.5 1.1-2.5 2.5-2.5z"/>
+							</svg>
+							</span>
 						</div>
 						<div class="buttons-act">
 							<button class="btn-post">Done</button>
