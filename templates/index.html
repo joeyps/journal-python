@@ -244,6 +244,10 @@
 			});
 			
 			me.btnPost.click(function() {
+				if (!me.desc.html().trim() && !me.photo.attr("key")) {
+					return;
+				}
+				
 				core.api("/event", "POST", { desc: me.desc.html(), pid:me.photo.attr("key") }, function(res) {
 					if(res) {
 						me.dismiss();

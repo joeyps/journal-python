@@ -23,6 +23,7 @@ from google.appengine.ext import blobstore
 
 import facebook
 import gcs
+import models
 from models import *
 import utils
 
@@ -157,9 +158,9 @@ class EventHandler(BaseHandler):
         data = json.loads(self.request.get("data"))
         if user:
             e = Event(parent=User.parse_key(user['id']))
-            if data['desc']:
-                e.description = data['desc']
-            if data['pid']:
+            if 'desc' in data:
+                e.description = models.escape(data['desc'], link=True, br=True)
+            if 'pid' in data:
                 photo = Photo.from_id(data['pid'])
                 if photo:
                     photo.draft = False

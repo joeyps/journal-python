@@ -235,9 +235,9 @@ class Journey(BaseModel):
         if not data:
             return
         if 'title' in data:
-            self.title = _escape(data['title'])
+            self.title = escape(data['title'])
         if 'desc' in data:
-            self.description = _escape(data['desc'], link=True, br=True)
+            self.description = escape(data['desc'], link=True, br=True)
         if 'bounds' in data:
             ne = data['bounds']['ne']
             ne = ndb.GeoPt(ne['lat'], ne['lng'])
@@ -396,7 +396,7 @@ class DayOfJourney(BaseModel):
         if not data:
             return
         if 'desc' in data:
-            self.description = _escape(data['desc'], link=True, br=True)
+            self.description = escape(data['desc'], link=True, br=True)
         self.put()
     
     def to_dict(self):
@@ -428,7 +428,7 @@ class Photo(BaseModel):
         if not data:
             return
         if 'desc' in data:
-            self.description = _escape(data['desc'], link=True, br=True)
+            self.description = escape(data['desc'], link=True, br=True)
         self.put()
         
     def is_owner(self, uid):
@@ -486,7 +486,7 @@ class Comment(BaseModel):
     
     @staticmethod
     def post(parent_key, user_key, content):
-        content = _escape(content, link=True, br=True)
+        content = escape(content, link=True, br=True)
         c = Comment(parent=parent_key, owner=user_key, content=content)
         c.put()
         return c
@@ -581,7 +581,7 @@ class Notification(BaseModel):
             return {
                 Notification.MESSAGES['friend_following']:lambda n : "%s is now following you" % (n['user']['name']),
                 Notification.MESSAGES['journey_like']:lambda n : "%s likes your story\"%s\"" % (n['user']['name'], n['target']['title']),
-                Notification.MESSAGES['journey_comment']:lambda n : "%s commented on your story: \"%s\"" % (n['user']['name'], _escape(n['target']['content']))
+                Notification.MESSAGES['journey_comment']:lambda n : "%s commented on your story: \"%s\"" % (n['user']['name'], escape(n['target']['content']))
             }[msg_type](n)
         else:
             return ""
@@ -631,8 +631,8 @@ class Notification(BaseModel):
         d['message_link'] = message_link
         return d
 
-def _escape(s, link=False, br=False):
-    s = s.replace("&nbsp;", "\s")
+def escape(s, link=False, br=False):
+    s = s.rstrip().replace("&nbsp;", "\s")
     if br:
         s = re.sub("<br.*?>", "\n", s).strip()
     #Deprecated since python v3.2
