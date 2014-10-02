@@ -6,7 +6,7 @@ from google.appengine.ext import blobstore
 
 import utils
 
-BUCKET = "/journal.appspot.com/"
+BUCKET = "/those-days.appspot.com/"
 
 @utils.timing
 def create_file(filename, file):

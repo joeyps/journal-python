@@ -306,26 +306,6 @@ class Journey(BaseModel):
         ndb.put_multi(photos)
         return True
         
-    def add_day(self, date=None):
-        if not date:
-            return
-        @ndb.transactional
-        def do_transaction(date):
-            date = datetime(date.year, date.month, date.day)
-            if self.has_day(date):
-                return
-            d = DayOfJourney(parent=self.key, date=date)
-            d.put()
-        do_transaction(date)
-        
-    def get_day(self, date):
-        days = DayOfJourney.query(DayOfJourney.date == date, ancestor=self.key).fetch(1)
-        return days[0] if len(days) > 0 else None
-        
-    def get_days(self):
-        q = DayOfJourney.query(ancestor=self.key).order(DayOfJourney.date)
-        return q
-        
     def get_photos(self, date=None):
         if not date:
             return Photo.query(ancestor=self.key)
@@ -384,28 +364,6 @@ class Journey(BaseModel):
                 photos=[]
                 )
         return d
-
-class DayOfJourney(BaseModel):
-    description = ndb.TextProperty()
-    date = ndb.DateTimeProperty()
-    #places = ndb.JsonProperty(repeated=True)#city, county
-    created_time = ndb.DateTimeProperty(auto_now_add=True)
-    updated_time = ndb.DateTimeProperty(auto_now=True)
-    
-    def update(self, data):
-        if not data:
-            return
-        if 'desc' in data:
-            self.description = escape(data['desc'], link=True, br=True)
-        self.put()
-    
-    def to_dict(self):
-        d = dict(
-                description=self.description,
-                places=[],
-                date=self.date.strftime(DATE_FORMAT)
-                )
-        return d  
         
 class Photo(BaseModel):
     #custom_time = ndb.DateTimeProperty()
@@ -682,6 +640,7 @@ class Event(BaseModel):
     description = ndb.TextProperty()
     photo = ndb.KeyProperty(kind=Photo)
     event_time = ndb.DateTimeProperty(auto_now=True)
+    location = ndb.GeoPtProperty()
     created_time = ndb.DateTimeProperty(auto_now_add=True)
     updated_time = ndb.DateTimeProperty(auto_now=True)
     
