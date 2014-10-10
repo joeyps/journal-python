@@ -51,16 +51,47 @@
 			margin-bottom:3px;
 		}
 		
-		#events .event .date {
+		#events .event .date,
+		.div-photo .date {
 			position:absolute;
 			left:10px;
 			bottom:8px;
 			color:#fff;
 		}
 		
-		#events .event .date .day {
+		#events .event .date .day,
+		.div-photo .date .day {
 			font-size:24px;
 			text-align:center;
+		}
+		
+		.events-place {
+			width:300px;
+			max-height:400px;
+		}
+		
+		.events-place .event {
+			
+		}
+		
+		.events-place .event img.photo {
+			width:100px;
+		}
+		
+		.event-single {
+			width:300px;
+		}
+		
+		.event-single .div-photo {
+			position:relative;
+		}
+		
+		.event-single img.photo {
+			width:100%;
+		}
+		
+		.event-single .desc {
+			padding:20px 10px;;
 		}
 		
 		.dlg {
@@ -74,7 +105,7 @@
 		}
 		
 		.dlg #map_canvas {
-			max-width:600px;
+			max-width:700px;
 			min-width: 350px;
 			height: 100%;
 			margin: 0 auto;
@@ -239,6 +270,7 @@
 		<script type="text/javascript" src="/static/js/date.format.js"></script>
 		<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script>
 		<script type="text/javascript" src="/static/js/markerclusterer.js"></script>
+		<script type="text/javascript" src="/static/js/infobox.js"></script>
 		<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
 		<script type="text/javascript" src="/static/js/core.js"></script>
 		<script type="text/javascript">
@@ -250,7 +282,28 @@
 		
 		core.Map = {
 			createMarker:function(opts) {
-				return new google.maps.Marker(opts);
+				var marker = new google.maps.Marker(opts);
+				google.maps.event.addListener(marker, 'click', function() {
+					var e = marker.event;
+					var v = $("<div class='event-single'></div>");
+					if (e.photo) {
+						var date = strptime(e.event_time, core.timezone);
+						var divPhoto = $("<div class='div-photo'><img class='photo' src='"
+							 					+ e.photo.thumb_url + "400' /></div>").appendTo(v);
+						var h = 300.0 * e.photo.height / e.photo.width;
+						divPhoto.css({ height: h + "px" });
+						divPhoto.append("<div class='date'><div class='month'>" + date.format("mmm").toUpperCase() + "</div>" + 
+																"<div class='day'>" + date.format("d") + "</div></div>")
+					}
+					if (e.description) {
+						v.append("<div class='desc'>" + e.description + "</div>")
+					}
+					var wrap = $("<div>");
+					wrap.append(v);
+					core.Map.infobox.setContent(wrap.html());
+					core.Map.infobox.open(core._map, marker.getPosition());
+				});
+				return marker;
 			},
 			getBounds:function(markers) {
 				var bounds = new google.maps.LatLngBounds();
@@ -259,7 +312,8 @@
 				}
 				return bounds;
 			},
-			markers:[]
+			markers:[],
+			infobox:new InfoBox({ pixelOffset:new google.maps.Size(0, -30) })
 		}
 		
 		core.getMap = function(canvas, opts) {
@@ -269,14 +323,27 @@
 				zoom: opts.zoom,
 				mapTypeId: google.maps.MapTypeId.ROADMAP
 			};
-			core._map = new google.maps.Map(canvas, mapOptions);
-			var mc = new MarkerClusterer(core._map, null, { zoomOnClick:false });
-			core._map.mc = mc;
+			var map = new google.maps.Map(canvas, mapOptions);
+			core._map = map;
+			var mc = new MarkerClusterer(map, null, { zoomOnClick:false });
+			map.mc = mc;
 			
 		    google.maps.event.addListener(mc, 'clusterclick', function(cluster) {
-				console.log(cluster);
+				var div = $("<div class='events-place'>");
+				var markers = cluster.getMarkers();
+				for (var i in markers) {
+					var e = markers[i].event;
+					var v = $("<div class='event'></div>").appendTo(div);
+					if (e.photo) {
+						v.append("<img class='photo' src='" + e.photo.thumb_url + "300' />")
+					}
+				}
+				var wrap = $("<div>");
+				wrap.append(div);
+				core.Map.infobox.setContent(wrap.html());
+				core.Map.infobox.open(map, cluster.getCenter());
 		    });
-			return core._map;
+			return map;
 		};
 		core.api = function() {
 			if(arguments.length < 2) {

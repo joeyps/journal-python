@@ -20,6 +20,7 @@ from webapp2_extras import sessions
 
 from google.appengine.api import images
 from google.appengine.ext import blobstore
+from google.appengine.ext import ndb
 
 import facebook
 import gcs
@@ -283,13 +284,23 @@ class PhotoHandler(BaseHandler):
         if 'GPSLatitude' in exif and 'GPSLongitude' in exif:
             photo.location = ndb.GeoPt(exif['GPSLatitude'], exif['GPSLongitude'])
         photo.exif = exif
-            
+
+class DemoHandler(BaseHandler):
+    def get(self):
+        results = Event.query().fetch(1000)
+        updated = []
+        for i in range(len(results)):
+            r = results[i]
+            r.location = ndb.GeoPt(i * 10, i * 10)
+            updated.append(r)
+        ndb.put_multi(updated)
 
 app = webapp2.WSGIApplication([
     ('/_api/event/([^/]+)?', EventHandler),
     ('/_api/event', EventHandler),
     ('/_api/events', EventsHandler),
     ('/_api/photo', PhotoHandler),
+    ('/_dev/demo', DemoHandler),
     ('/', MainHandler)
 ], debug=True
 , config=config)

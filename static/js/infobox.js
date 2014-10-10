@@ -192,10 +192,10 @@ InfoBox.prototype.setContent = function(html) {
 	this.content_ = html;
 };
 
-InfoBox.prototype.open = function(map, marker) {
+InfoBox.prototype.open = function(map, pos) {
 	var me = this;
-	if (marker)
-		this.position_ = marker.getPosition();
+	if (pos)
+		this.position_ = pos;
 	this.map_ = map;
 	if(this.map_ && !this.boundsChangedListener_) {
 		this.boundsChangedListener_ = google.maps.event.addListener(this.map_, "bounds_changed", function() {
