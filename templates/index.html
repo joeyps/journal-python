@@ -34,11 +34,17 @@
 			text-align:left;
 		}
 		
+		#events:after {
+			content:" ";
+			clear:both;
+			display:block;
+		}
+		
 		#events .event {
 			position:relative;
 			background-color:#ccc;
 			background-size:cover;
-			display:inline-block;
+			float:left;
 			width:170px;
 			height:170px;
 			margin-right:3px;
@@ -179,12 +185,25 @@
 			max-height:400px;
 			position:relative;
 			text-align:center;
+			font-size:0; /* avoid padding-bottom for img */
 		}
 		
 		.dlg .dlg-event-photo img {
-			display:inline-block;
+			display:inline;
 			max-height:100%; 
 			max-width:100%;
+		}
+		
+		.dlg .dlg-event-place {
+			background-color:#ccc;
+			position:relative;
+			text-align:center;
+		}
+		
+		.dlg .dlg-event-place img {
+			display:block;
+			width:100%;
+			min-height:150px;
 		}
 		
 		.dlg .dlg-event-body .progressbar {
@@ -219,6 +238,7 @@
 		</style>
 		<script type="text/javascript" src="/static/js/date.format.js"></script>
 		<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script>
+		<script type="text/javascript" src="/static/js/markerclusterer.js"></script>
 		<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
 		<script type="text/javascript" src="/static/js/core.js"></script>
 		<script type="text/javascript">
@@ -227,6 +247,21 @@
 			DATETIME_FORMAT:"yyyy-mm-dd hh:MM:ss",
 			timezone:(-new Date().getTimezoneOffset()/60),
 		};
+		
+		core.Map = {
+			createMarker:function(opts) {
+				return new google.maps.Marker(opts);
+			},
+			getBounds:function(markers) {
+				var bounds = new google.maps.LatLngBounds();
+				for(var i in markers) {
+					bounds.extend(markers[i].getPosition());
+				}
+				return bounds;
+			},
+			markers:[]
+		}
+		
 		core.getMap = function(canvas, opts) {
 			if (core._map) return core._map;
 			var mapOptions = {
@@ -235,6 +270,12 @@
 				mapTypeId: google.maps.MapTypeId.ROADMAP
 			};
 			core._map = new google.maps.Map(canvas, mapOptions);
+			var mc = new MarkerClusterer(core._map, null, { zoomOnClick:false });
+			core._map.mc = mc;
+			
+		    google.maps.event.addListener(mc, 'clusterclick', function(cluster) {
+				console.log(cluster);
+		    });
 			return core._map;
 		};
 		core.api = function() {
@@ -308,6 +349,11 @@
 						me.empty.hide();
 						for (var i in res) {
 							var e = res[i];
+							if (e.location) {
+								var marker = core.Map.createMarker({ position:e.location });
+								marker.event = e;
+								core.Map.markers.push(marker);
+							}
 							var date = strptime(e.event_time, core.timezone);
 							var eventView = $("<div class='event'></div>").appendTo(me.view);
 							eventView.attr("key", e.id);
@@ -440,8 +486,8 @@
 				me.loc = null;
 			} else {
 				me.editable.hide();
-				me.desc.show();
 				me.reset();
+				me.desc.show();
 				me.btnPost.hide();
 				core.api("/event/" + mode, "GET", function(res) {
 					if (res) {
@@ -479,10 +525,12 @@
 			var me = this;
 			me.loc = loc;
 			me.btnPlace.addClass("active");
-			me.place.show();
+			me.place.show();			
 			me.mapimage.show();
+			var w = me.place.width();
+			var h = me.place.height();
 			var url = "https://maps.googleapis.com/maps/api/staticmap?";
-			var q = "center=" + loc.lat + "," + loc.lng + "&zoom=13&size=600x300&maptype=roadmap" + 
+			var q = "center=" + loc.lat + "," + loc.lng + "&zoom=13&size=" + w + "x" + h + "&maptype=roadmap" + 
 			"&markers=" + loc.lat + "," + loc.lng;
 			me.mapimage.attr("src", url + q);
 		};
@@ -537,9 +585,21 @@
 			
 			$(".btn-map").click(function() {
 				$("#dlg_map").show();
-				core.getMap($("#map_canvas")[0], {zoom:4, center:{lat:0, lng:0}});
+				var map = core.getMap($("#map_canvas")[0], {zoom:4, center:{lat:0, lng:0}});
+				var markers = core.Map.markers;
+				for (var i in markers) {
+					var marker = markers[i];
+					marker.setMap(map);
+				}
+				map.mc.clearMarkers();
+				map.mc.addMarkers(markers);
+				var bounds = core.Map.getBounds(markers);
+				map.fitBounds(bounds);
 			});
 			
+			$("#map_canvas").click(function(e) {
+				e.stopPropagation();
+			});
 		});
 		</script>
     </head>
