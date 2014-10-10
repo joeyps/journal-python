@@ -67,6 +67,13 @@
 			overflow-y:scroll;
 		}
 		
+		.dlg #map_canvas {
+			max-width:600px;
+			min-width: 350px;
+			height: 100%;
+			margin: 0 auto;
+		}
+		
 		.dlg .dlg-event-body {
 			max-width:500px;
 			min-width: 350px;
@@ -211,11 +218,24 @@
 		
 		</style>
 		<script type="text/javascript" src="/static/js/date.format.js"></script>
+		<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script>
 		<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
 		<script type="text/javascript" src="/static/js/core.js"></script>
 		<script type="text/javascript">
 		core = {
+			DATE_FORMAT:"yyyy-mm-dd",
+			DATETIME_FORMAT:"yyyy-mm-dd hh:MM:ss",
 			timezone:(-new Date().getTimezoneOffset()/60),
+		};
+		core.getMap = function(canvas, opts) {
+			if (core._map) return core._map;
+			var mapOptions = {
+				center: opts.center,
+				zoom: opts.zoom,
+				mapTypeId: google.maps.MapTypeId.ROADMAP
+			};
+			core._map = new google.maps.Map(canvas, mapOptions);
+			return core._map;
 		};
 		core.api = function() {
 			if(arguments.length < 2) {
@@ -325,10 +345,12 @@
 			me.date = me.view.find(".btn-date");
 			me.time = me.view.find(".btn-time");
 			me.btnPhoto = me.view.find(".btn-photo");
+			me.btnPlace = me.view.find(".btn-place");
+			me.photo = me.view.find(".dlg-event-photo");
+			me.place = me.view.find(".dlg-event-place");
 			me.filePhoto = me.btnPhoto.find(".file-photo");
 			me.people = me.view.find(".btn-people");
-			me.place = me.view.find(".btn-place");
-			me.photo = me.view.find(".dlg-event-photo");
+			me.mapimage = me.place.find("img");
 			me.image = me.photo.find("img");
 			me.progressbar = new ProgressBar(me.photo.find(".progressbar"));
 			me.btnPost = me.view.find(".btn-post");
@@ -347,7 +369,13 @@
 					return;
 				}
 				
-				core.api("/event", "POST", { desc: me.editable.html(), pid:me.photo.attr("key") }, function(res) {
+				var data = { desc: me.editable.html(), 
+							pid:me.photo.attr("key"), 
+							event_time:me.datetime.format(core.DATETIME_FORMAT)};
+				if (me.loc) {
+					data.loc = me.loc;
+				}
+				core.api("/event", "POST", data, function(res) {
 					if(res) {
 						me.dismiss();
 						if (me.opts.onEventAdded) {
@@ -374,6 +402,10 @@
 				uploaded:function(i, file, res) {
 					if(res) {
 						me.setPhoto(res);
+						me.setDate(strptime(res.utc, core.timezone));
+						if (res.location) {
+							me.setLocation(res.location);
+						}
 					}
 				},
 				done:function() {
@@ -387,24 +419,29 @@
 			});
 		}
 		
+		DialogEvent.prototype.reset = function() {
+			var me = this;
+			me.desc.hide();
+			me.descbody.html("");
+			me.photo.hide();
+			me.place.hide();
+			me.photo.attr("key", "");
+			me.view.find(".btn-icon").removeClass("active");
+			me.loading.hide();
+		};
+		
 		DialogEvent.prototype.setMode = function(mode) {
 			var me = this;
 			if (mode == 'new') {
 				me.editable.html("");
 				me.editable.show();
-				me.desc.hide();
-				me.photo.hide();
-				me.photo.attr("key", "");
-				me.btnPhoto.removeClass("active");
-				me.loading.hide();
+				me.reset();
 				me.btnPost.show();
+				me.loc = null;
 			} else {
 				me.editable.hide();
 				me.desc.show();
-				me.descbody.html("");
-				me.loading.show();
-				me.photo.hide();
-				me.btnPhoto.removeClass("active");
+				me.reset();
 				me.btnPost.hide();
 				core.api("/event/" + mode, "GET", function(res) {
 					if (res) {
@@ -412,6 +449,9 @@
 						me.setDate(strptime(res.event_time, core.timezone));
 						if (res.photo)
 							me.setPhoto(res.photo);
+						if (res.location) {
+							me.setLocation(res.location);
+						}
 					}
 					me.loading.hide();
 				});
@@ -422,7 +462,7 @@
 			var me = this;
 			me.date.text(date.format("mmm d"));
 			me.time.text(date.format("h:MM TT"));
-			me.datetime = date;
+			me.datetime = date.addHours(-core.timezone);
 		};
 		
 		DialogEvent.prototype.setPhoto = function(photo) {
@@ -433,6 +473,18 @@
 			me.image.attr("src", photo.thumb_url + "600");
 			me.progressbar.view.hide();
 			me.photo.attr("key", photo.id);
+		};
+		
+		DialogEvent.prototype.setLocation = function(loc) {
+			var me = this;
+			me.loc = loc;
+			me.btnPlace.addClass("active");
+			me.place.show();
+			me.mapimage.show();
+			var url = "https://maps.googleapis.com/maps/api/staticmap?";
+			var q = "center=" + loc.lat + "," + loc.lng + "&zoom=13&size=600x300&maptype=roadmap" + 
+			"&markers=" + loc.lat + "," + loc.lng;
+			me.mapimage.attr("src", url + q);
 		};
 		
 		DialogEvent.prototype.show = function() {
@@ -479,7 +531,15 @@
 			        e.preventDefault();
 			        $(this).scrollTop(scrollTo + $(this).scrollTop());
 			    }
+			}).click(function() {
+				$(this).hide();
 			});
+			
+			$(".btn-map").click(function() {
+				$("#dlg_map").show();
+				core.getMap($("#map_canvas")[0], {zoom:4, center:{lat:0, lng:0}});
+			});
+			
 		});
 		</script>
     </head>
@@ -487,14 +547,16 @@
 		<div id="main">
 			<div class="buttons-main">
 				<button class="btn-new btn-post" style="float:left;">New Event</button>
-				<div class="buttons-mode"><button>Grid</button><button>Map</button></div>
+				<div class="buttons-mode"><button>Grid</button><button class="btn-map">Map</button></div>
 			</div>
 			<div id="events"></div>
 			<div id="empty" style="display:none;">
 				There is no any event yet. <br /><button class="btn-new btn-post">New Event</button>
 			</div>
 			<div id="loading" style="display:none;"><img src="/static/images/loading.gif" /></div>
-			<div id="map_canvas"></div>
+			<div id="dlg_map" class="dlg" style="display:none;">
+				<div id="map_canvas"></div>
+			</div>
 			<div id="dlg_event" class="dlg" style="display:none;">
 				<div class="dlg-event-body">
 					<div class="dlg-event-header">
@@ -513,6 +575,7 @@
 						<div class="progressbar"><div class="progress"></div></div>
 					</div>
 					<div class="dlg-event-place">
+						<img />
 					</div>
 					<div class="dlg-event-tags">
 					</div>
@@ -528,7 +591,7 @@
 									</label>
 								</form>
 							</span>
-							<span class="btn-icon">
+							<span class="btn-icon btn-people">
 								<svg class="icon-people" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
 								<g>
 									<path d="M78.685,56.269l-0.013-3.177c4.492,0.587,13.649-2.684,13.649-2.684c-3.104-3.174-3.806-6.879-5.844-21.417   C84.44,14.452,71.805,14.588,70.854,14.588S57.267,14.452,55.229,28.99c-2.038,14.538-2.74,18.243-5.843,21.417   c0,0,9.157,3.271,13.649,2.684l-0.013,3.177c-2.305,2.527-5.047,4.457-7.783,6.102c0.896,0.508,1.785,0.999,2.649,1.473   c6.106,3.35,11.874,6.513,11.874,12.85v6.926h28.4c0.975,0,1.765-0.791,1.765-1.766v-7.94   C99.928,66.631,86.677,65.033,78.685,56.269z"/>
@@ -537,7 +600,7 @@
 								<path d="M43.186,57.071L43.186,57.071v-2.551c2.317-2.701,4.064-5.818,5.253-9.45  c0.169-0.519,0.328-1.048,0.474-1.587c1.214-0.623,2.202-2.282,2.424-4.317c0.075-0.677,0.059-1.331-0.035-1.936  c-0.158-1.007-0.531-1.874-1.053-2.472c0.104-1.927,0.108-3.963,0.018-6.109c-0.07-1.669-0.197-3.404-0.388-5.216  c-0.047-0.448-0.107-0.878-0.179-1.295c-1.807-10.416-11.285-11.445-14.886-11.454c-0.144-0.001-2.636-0.001-2.78,0  c-3.601,0.008-13.079,1.038-14.886,11.454c-0.072,0.417-0.132,0.848-0.179,1.295c-0.19,1.812-0.316,3.546-0.388,5.216  c-0.091,2.146-0.087,4.183,0.018,6.109c-0.523,0.598-0.896,1.465-1.052,2.472c-0.095,0.605-0.111,1.259-0.037,1.936  c0.224,2.035,1.21,3.695,2.425,4.317c0.294,1.08,0.633,2.116,1.019,3.112c1.155,2.989,2.723,5.609,4.709,7.925v2.55v0.001  C14.775,66.818,0.084,68.594,0.084,76.692v8.828c0,1.084,0.878,1.964,1.963,1.964h62.753c1.084,0,1.962-0.88,1.962-1.964v-8.828  C66.763,68.594,52.072,66.818,43.186,57.071z"/>
 								</svg>
 							</span>
-							<span class="btn-icon">
+							<span class="btn-icon btn-place">
 								<svg class="icon-marker" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
 								<g id="Layer_7" display="none">
 									<path display="inline" d="M84.938,26.044H15.062c-0.547,0-0.998,0.446-0.998,0.997v45.916c0,0.553,0.451,0.999,0.998,0.999h69.875   c0.555,0,0.998-0.446,0.998-0.999V27.041C85.936,26.49,85.492,26.044,84.938,26.044z M83.777,46.589H16.23v-9.98h67.547V46.589z"/>
@@ -556,7 +619,7 @@
 								</g>
 								</svg>
 							</span>
-							<span class="btn-icon">
+							<span class="btn-icon btn-tag">
 							<svg class="icon-tag" xmlns="http://www.w3.org/2000/svg" version="1.1" width="32" height="32" data-icon="tag" viewBox="0 0 32 32">
 							  <path d="M.5 0c-.3 0-.5.2-.5.5v11c0 .3.206.706.406.906l19.281 19.281c.14.14.33.182.5.125h.031l11.594-11.594c.005-.011-.004-.02 0-.031.057-.17.015-.36-.125-.5l-19.281-19.281c-.2-.2-.606-.406-.906-.406h-11zm6 4c1.4 0 2.5 1.1 2.5 2.5s-1.1 2.5-2.5 2.5-2.5-1.1-2.5-2.5 1.1-2.5 2.5-2.5z"/>
 							</svg>

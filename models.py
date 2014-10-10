@@ -372,6 +372,7 @@ class Photo(BaseModel):
     blob = ndb.BlobKeyProperty()
     thumb_url = ndb.StringProperty(indexed=False)
     exif = ndb.JsonProperty()
+    location = ndb.GeoPtProperty()
     utc = ndb.DateTimeProperty()
     draft = ndb.BooleanProperty(default=True)
     original_time = ndb.DateTimeProperty()
@@ -398,7 +399,8 @@ class Photo(BaseModel):
                 height=self.height,
                 original_time=self.original_time.strftime(DATETIME_FORMAT),
                 utc=self.utc.strftime(DATETIME_FORMAT),
-                thumb_url=self.thumb_url
+                thumb_url=self.thumb_url,
+                location= { 'lat':self.location.lat, 'lng':self.location.lon } if self.location else None
                 )
         return d
         
@@ -588,6 +590,28 @@ class Notification(BaseModel):
         d['message_str'] = message_str
         d['message_link'] = message_link
         return d
+        
+class Event(BaseModel):
+    description = ndb.TextProperty()
+    photo = ndb.KeyProperty(kind=Photo)
+    event_time = ndb.DateTimeProperty()
+    location = ndb.GeoPtProperty()
+    created_time = ndb.DateTimeProperty(auto_now_add=True)
+    updated_time = ndb.DateTimeProperty(auto_now=True)
+    
+    @classmethod        
+    def _get_parent_cls(cls):
+        return User      
+    
+    def to_dict(self):
+        d = dict(
+            id=self.id,
+            description=self.description,
+            photo=self.photo.get().to_dict() if self.photo else None,
+            event_time=self.event_time.strftime(DATETIME_FORMAT),
+            location= { 'lat':self.location.lat, 'lng':self.location.lon } if self.location else None
+                )
+        return d
 
 def escape(s, link=False, br=False):
     s = s.rstrip().replace("&nbsp;", "\s")
@@ -636,23 +660,3 @@ def formatted_time(time, from_now=True):
     else:
         return "%s %d" % (time.strftime("%b"), time.day)
         
-class Event(BaseModel):
-    description = ndb.TextProperty()
-    photo = ndb.KeyProperty(kind=Photo)
-    event_time = ndb.DateTimeProperty(auto_now=True)
-    location = ndb.GeoPtProperty()
-    created_time = ndb.DateTimeProperty(auto_now_add=True)
-    updated_time = ndb.DateTimeProperty(auto_now=True)
-    
-    @classmethod        
-    def _get_parent_cls(cls):
-        return User      
-    
-    def to_dict(self):
-        d = dict(
-            id=self.id,
-            description=self.description,
-            photo=self.photo.get().to_dict() if self.photo else None,
-            event_time=self.event_time.strftime(DATETIME_FORMAT)
-                )
-        return d

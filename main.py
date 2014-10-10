@@ -175,6 +175,11 @@ class EventHandler(BaseHandler):
                     photo.draft = False
                     photo.put()
                     e.photo = photo.key
+            if 'event_time' in data:
+                e.event_time = datetime.strptime(data['event_time'], models.DATETIME_FORMAT)
+            if 'loc' in data:
+                loc = data['loc']
+                e.location = ndb.GeoPt(loc['lat'], loc['lng'])
             e.put()
             return self.send_json(e.to_dict())
         self.send_json(False)
@@ -256,7 +261,14 @@ class PhotoHandler(BaseHandler):
         
     @staticmethod
     def apply_exif_for_photo(photo, exif):
-        original_time = datetime.strptime(exif['DateTimeDigitized'], "%Y:%m:%d %H:%M:%S")     
+        if 'DateTimeDigitized' in exif:
+            str_datetime = exif['DateTimeDigitized']
+            if "/" in str_datetime:
+                original_time = datetime.strptime(str_datetime, "%Y/%m/%d %H:%M:%S")
+            else:
+                original_time = datetime.strptime(str_datetime, "%Y:%m:%d %H:%M:%S")
+        else:
+            original_time = datetime.today()
         with_gps_tag = 'GPSDateStamp' in exif and 'GPSTimeStamp' in exif
         utc = None
         if with_gps_tag:
