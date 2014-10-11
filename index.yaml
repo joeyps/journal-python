@@ -11,6 +11,12 @@ indexes:
 # your application using appcfg.py.
 
 - kind: Event
+  properties:
+  - name: who_can_see
+  - name: event_time
+    direction: desc
+
+- kind: Event
   ancestor: yes
   properties:
   - name: event_time

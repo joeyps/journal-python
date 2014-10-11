@@ -200,7 +200,8 @@
 			display:inline-block;
 		}
 		
-		.dlg .dlg-event-body .buttons:after {
+		.dlg .dlg-event-body .dlg-buttons:after,
+		.dlg .dlg-event-people:after {
 			clear:both;
 			content:" ";
 			display:block;
@@ -220,6 +221,7 @@
 			display: inline-block;
 			vertical-align: middle;
 			margin-right: 18px;
+			position:relative;
 		}
 		
 		.dlg .dlg-event-body .btn-icon svg {
@@ -292,6 +294,24 @@
 			min-height:150px;
 		}
 		
+		.dlg .dlg-event-people {
+			padding: 10px 0px;	
+		}
+		
+		.dlg .dlg-event-people .user {
+			float:left;
+			width:50px;
+			height:50px;
+			margin:0px 2px 2px 0px;
+			position:relative;
+		}
+		
+		.dlg .dlg-event-people .user img {
+			width:100%;
+			height:100%;
+			border-radius:2px;
+		}
+		
 		.dlg .dlg-event-body .progressbar {
 			display:inline-block;
 			position: absolute;
@@ -307,6 +327,10 @@
 			right:0;
 			text-align:center;
 		}
+		
+		.dlg .dlg-buttons {
+			padding-top:10px;
+		}
 	
 		.progressbar {
 			background-color: #e5e5e5;
@@ -321,7 +345,62 @@
 			position: absolute;
 		}
 		
+		.menu-people {
+			right:-115px;
+			width:230px;
+		}
+		
+		.menu-people .people:after {
+			content:" ";
+			display:block;
+			clear:both;
+		}
+		
+		.menu-people .user {
+			float:left;
+			width:50px;
+			height:50px;
+			margin:0px 2px 2px 0px;
+			position:relative;
+		}
+		
+		.menu-people .user img {
+			width:100%;
+			height:100%;
+		}
+		
+		.menu-people .user .mask-check {
+			position:absolute;
+			left:0;
+			right:0;
+			top:0;
+			bottom:0;
+			background-color:rgba(0, 0, 0, 0.3);
+			display:none;
+			text-align:center;
+		}
+		
+		.menu-people .user:hover .mask-check,
+		.menu-people .user.checked .mask-check {
+			display:block;
+		}
+		
+		.menu-people .user.checked .mask-check svg {
+			fill:#449c2f;
+		}
+		
+		.menu-people .mask-check svg {
+			width: 24px;
+			height: 24px;
+			margin-top: 12px;
+		}
+		
+		.menu-people .buttons {
+			text-align:right;
+		}
+		
 		</style>
+		<script type="text/javascript" src="/static/js/assets.js"></script>
 		<script type="text/javascript" src="/static/js/date.format.js"></script>
 		<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script>
 		<script type="text/javascript" src="/static/js/markerclusterer.js"></script>
@@ -333,6 +412,31 @@
 			DATE_FORMAT:"yyyy-mm-dd",
 			DATETIME_FORMAT:"yyyy-mm-dd hh:MM:ss",
 			timezone:(-new Date().getTimezoneOffset()/60),
+			events: {
+				bind:function(obj, type, callback) {
+					if (!obj.event) {
+						obj.event = {};
+					}
+					obj.event[type] = callback;
+				},
+				unbind:function(obj, type) {
+					if (!obj.event) {
+						obj.event = {};
+					} else {
+						obj.event[type] = null;
+					}
+				},
+				trigger:function(obj, type, args) {
+					if (!obj.event) {
+						obj.event = {};
+					} else {
+						var cb = obj.event[type];
+						if (cb) {
+							cb(args);
+						}
+					}
+				}
+			}
 		};
 		
 		core.Map = {
@@ -455,6 +559,47 @@
 			});
 		};
 		
+		core.Friend = {
+			users:{},
+			add:function(user) {
+				core.Friend.users[user.id] = user;
+			},
+			lookup:function(id) {
+				return core.Friend.users[id];
+			}
+		};
+		
+		core.api("/me/friends", "GET", function(res) {
+			if (res) {
+				for (var i in res) {
+					core.Friend.add(res[i]);
+				}
+			}
+		});
+		
+		core.Menu = {
+			menus:{},
+			add:function(view) {
+				var menus = core.Menu.menus;
+				var id = view.attr("menu-id");
+				if (!menus[id]) {
+					menus[id] = new Menu(view);
+				}
+				return menus[id];
+			},
+			lookup:function(id) {
+				return core.Menu.menus[id];
+			}
+		};
+		
+		function Menu(view) {
+			var me = this;
+			this.view = view;
+			this.view.on("show", function() {
+				core.events.trigger(me, "show");
+			});
+		}
+		
 		function Events(view, empty, loading, opts) {
 			var me  = this;
 			me.opts = opts;
@@ -486,6 +631,7 @@
 			var view = me.inflateEvent(e);
 			if (events.length == 0) {
 				eventsContainer.append(view);
+				me.notifyDataChanged();
 				return;
 			}
 
@@ -500,6 +646,7 @@
 			});
 			if (!added)
 				eventsContainer.append(view);
+			me.notifyDataChanged();
 		};
 		
 		Events.prototype.inflateEvent = function(e) {
@@ -513,6 +660,16 @@
 			return eventView;
 		};
 		
+		Events.prototype.notifyDataChanged = function() {
+			var me = this;
+			var events = me.view.find(".event");
+			if (events.length > 0) {
+				me.empty.hide();
+			} else {
+				me.empty.show();
+			}
+		};
+		
 		Events.prototype.fetch = function() {
 			var me = this;
 			me.view.html("");
@@ -520,7 +677,6 @@
 			core.api("/events", "GET", function(res) {
 				if (res) {
 					if (res.length > 0) {
-						me.empty.hide();
 						var year = null;
 						for (var i in res) {
 							var e = res[i];
@@ -535,9 +691,8 @@
 							}
 							var eventView = me.inflateEvent(e).appendTo(year.getEvents());
 						}
-					} else {
-						me.empty.show();
-					}
+					} 
+					me.notifyDataChanged();
 				}
 				me.loading.hide();
 			});
@@ -547,6 +702,9 @@
 			var view = $("<div class='year' year='" + year + "'></div>");
 			view.append("<div class='header'><span class='year-num'>" + year + "</span></div>");
 			view.append("<div class='events'></div>");
+			if (new Date().getFullYear() == year) {
+				view.find(".header").hide();
+			}
 			var years = p.view.find(".year");
 			if (years.length == 0) {
 				p.view.append(view);
@@ -598,14 +756,15 @@
 			me.time = me.view.find(".btn-time");
 			me.btnPhoto = me.view.find(".btn-photo");
 			me.btnPlace = me.view.find(".btn-place");
+			me.btnPeople = me.view.find(".btn-people");
 			me.photo = me.view.find(".dlg-event-photo");
 			me.place = me.view.find(".dlg-event-place");
+			me.people = me.view.find(".dlg-event-people");
 			me.filePhoto = me.btnPhoto.find(".file-photo");
-			me.people = me.view.find(".btn-people");
 			me.mapimage = me.place.find("img");
 			me.image = me.photo.find("img");
 			me.progressbar = new ProgressBar(me.photo.find(".progressbar"));
-			me.btnPost = me.view.find(".btn-post");
+			me.btnPost = me.view.find(".buttons-act .btn-post");
 			me.loading = me.view.find(".dlg-event-loading");
 			
 			me.view.click(function() {
@@ -621,9 +780,15 @@
 					return;
 				}
 				
+				var people = [];
+				var users = me.people.find(".user");
+				users.each(function() {
+					people.push($(this).attr("key"));
+				});
 				var data = { desc: me.editable.html(), 
 							pid:me.photo.attr("key"), 
-							event_time:me.datetime.format(core.DATETIME_FORMAT)};
+							event_time:me.datetime.format(core.DATETIME_FORMAT),
+							people:people };
 				if (me.loc) {
 					data.loc = me.loc;
 				}
@@ -677,6 +842,7 @@
 			me.descbody.html("");
 			me.photo.hide();
 			me.place.hide();
+			me.setPeople([]);
 			me.photo.attr("key", "");
 			me.view.find(".btn-icon").removeClass("active");
 			me.loading.hide();
@@ -704,6 +870,7 @@
 						if (res.location) {
 							me.setLocation(res.location);
 						}
+						me.setPeople(res.people);
 					}
 					me.loading.hide();
 				});
@@ -725,6 +892,22 @@
 			me.image.attr("src", photo.thumb_url + "600");
 			me.progressbar.view.hide();
 			me.photo.attr("key", photo.id);
+		};
+		
+		DialogEvent.prototype.setPeople = function(ids) {
+			var me = this;
+			if (ids.length > 0) {
+				me.btnPeople.addClass("active");
+				var wrap = $("<div></div>");
+				for (var i in ids) {
+					var user = core.Friend.lookup(ids[i]);
+					wrap.append("<div class='user' key='" + user.id + "'><img src='" + user.profile_picture + "' /></div>");
+				}
+				me.people.html(wrap.html());
+			} else {
+				me.btnPeople.removeClass("active");
+				me.people.html("");
+			}
 		};
 		
 		DialogEvent.prototype.setLocation = function(loc) {
@@ -751,6 +934,97 @@
 		
 		$(function() {
 			var dlgEvent = null;
+			$(".btn-menu").on("click", function(e) {
+				e.stopPropagation();
+				var target = $(this).attr("target");
+				var menu = $(target);
+				if(menu.is(":visible")) {
+					$(".menu").hide();
+				} else {
+					$(".menu").hide();
+					menu.trigger("before_show");
+					menu.show();
+					menu.trigger("show");
+				}
+			});
+			
+			$(".menu").each(function(i) {
+				$(this).attr("menu-id", "menu-" + i);
+				core.Menu.add($(this));
+			});
+			
+			$(".menu").click(function(e) {
+				e.stopPropagation();
+			});
+			
+			$(document).click(function() {
+				$(".menu").hide();
+			});
+			
+			var menuPeople = core.Menu.lookup($(".menu-people").attr("menu-id"));
+			if (menuPeople) {
+				menuPeople.corridor = {
+					initial:false,
+					loading:false
+				};
+				menuPeople.people = [];
+				menuPeople.viewpeople = menuPeople.view.find(".people");
+				menuPeople.view.on("click", ".user", function() {
+					$(this).toggleClass("checked");
+					var count = menuPeople.getSelected().length;
+					menuPeople.btnPost.text("Apply" + (count > 0 ? "(" + count + ")" : ""));
+				});
+				
+				menuPeople.view.find(".btn-cancel").click(function() {
+					menuPeople.view.hide();
+				});
+				
+				menuPeople.btnPost = menuPeople.view.find(".btn-post");
+				menuPeople.btnPost.click(function() {
+					var users = menuPeople.getSelected();
+					var ids = [];
+					users.each(function(i) {
+						ids.push($(this).attr("key"));
+					});
+					dlgEvent.setPeople(ids);
+					menuPeople.view.hide();
+				});
+				
+				menuPeople.getSelected = function() {
+					return menuPeople.view.find(".user.checked");
+				};
+				
+				menuPeople.setSelected = function(ids) {
+					menuPeople.getSelected().removeClass("checked");
+					for (var i in ids) {
+						menuPeople.view.find(".user[key=" + ids[i] +"]").addClass("checked");
+					}
+					var count = ids.length;
+					menuPeople.btnPost.text("Apply" + (count > 0 ? "(" + count + ")" : ""));
+				};
+				
+				core.events.bind(menuPeople, "show", function() {
+					if (!menuPeople.corridor.initial && !menuPeople.corridor.loading) {
+						menuPeople.corridor.loading = true;
+						core.api("/me/friends", "GET", function(res) {
+							if (res) {
+								for (var i in res) {
+									var user = res[i];
+									core.Friend.add(user);
+									menuPeople.viewpeople.append("<div class='user' key='" + user.id + "'>"
+												+ "<img src=" + user.profile_picture + " />"
+												+ "<div class='mask-check'>" + assets.svg.check + "</div>"
+												+ "</div>")
+								}
+							}
+							
+							menuPeople.corridor.loading = false;
+							menuPeople.corridor.initial = true;
+						});
+					}
+				});
+			}
+			
 			var events = new Events($("#events"), $("#empty"), $("#loading"), {
 				onItemClick:function(id) {
 					dlgEvent.setMode(id);
@@ -845,7 +1119,7 @@
 					</div>
 					<div class="dlg-event-tags">
 					</div>
-					<div class="buttons">
+					<div class="dlg-buttons">
 						<div class="buttons-tools">
 							<span class="btn-icon btn-photo">
 								<form style="display: inline-block;">
@@ -857,7 +1131,7 @@
 									</label>
 								</form>
 							</span>
-							<span class="btn-icon btn-people">
+							<span class="btn-icon btn-people btn-menu" target=".menu-people">
 								<svg class="icon-people" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
 								<g>
 									<path d="M78.685,56.269l-0.013-3.177c4.492,0.587,13.649-2.684,13.649-2.684c-3.104-3.174-3.806-6.879-5.844-21.417   C84.44,14.452,71.805,14.588,70.854,14.588S57.267,14.452,55.229,28.99c-2.038,14.538-2.74,18.243-5.843,21.417   c0,0,9.157,3.271,13.649,2.684l-0.013,3.177c-2.305,2.527-5.047,4.457-7.783,6.102c0.896,0.508,1.785,0.999,2.649,1.473   c6.106,3.35,11.874,6.513,11.874,12.85v6.926h28.4c0.975,0,1.765-0.791,1.765-1.766v-7.94   C99.928,66.631,86.677,65.033,78.685,56.269z"/>
@@ -865,6 +1139,14 @@
 								<path d="M99.843,73.97v7.94"/>
 								<path d="M43.186,57.071L43.186,57.071v-2.551c2.317-2.701,4.064-5.818,5.253-9.45  c0.169-0.519,0.328-1.048,0.474-1.587c1.214-0.623,2.202-2.282,2.424-4.317c0.075-0.677,0.059-1.331-0.035-1.936  c-0.158-1.007-0.531-1.874-1.053-2.472c0.104-1.927,0.108-3.963,0.018-6.109c-0.07-1.669-0.197-3.404-0.388-5.216  c-0.047-0.448-0.107-0.878-0.179-1.295c-1.807-10.416-11.285-11.445-14.886-11.454c-0.144-0.001-2.636-0.001-2.78,0  c-3.601,0.008-13.079,1.038-14.886,11.454c-0.072,0.417-0.132,0.848-0.179,1.295c-0.19,1.812-0.316,3.546-0.388,5.216  c-0.091,2.146-0.087,4.183,0.018,6.109c-0.523,0.598-0.896,1.465-1.052,2.472c-0.095,0.605-0.111,1.259-0.037,1.936  c0.224,2.035,1.21,3.695,2.425,4.317c0.294,1.08,0.633,2.116,1.019,3.112c1.155,2.989,2.723,5.609,4.709,7.925v2.55v0.001  C14.775,66.818,0.084,68.594,0.084,76.692v8.828c0,1.084,0.878,1.964,1.963,1.964h62.753c1.084,0,1.962-0.88,1.962-1.964v-8.828  C66.763,68.594,52.072,66.818,43.186,57.071z"/>
 								</svg>
+								<div class="menu menu-people">
+									<div class="people">
+									</div>
+									<div class="buttons">
+										<button class="btn-cancel">Cancel</button>
+										<button class="btn-post">Apply</button>
+									</div>
+								</div>
 							</span>
 							<span class="btn-icon btn-place">
 								<svg class="icon-marker" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">

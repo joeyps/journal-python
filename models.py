@@ -594,8 +594,10 @@ class Notification(BaseModel):
 class Event(BaseModel):
     description = ndb.TextProperty()
     photo = ndb.KeyProperty(kind=Photo)
+    people = ndb.KeyProperty(kind=User, repeated=True)
     event_time = ndb.DateTimeProperty()
     location = ndb.GeoPtProperty()
+    who_can_see = ndb.KeyProperty(kind=User, repeated=True)
     created_time = ndb.DateTimeProperty(auto_now_add=True)
     updated_time = ndb.DateTimeProperty(auto_now=True)
     
@@ -609,6 +611,7 @@ class Event(BaseModel):
             description=self.description,
             photo=self.photo.get().to_dict() if self.photo else None,
             event_time=self.event_time.strftime(DATETIME_FORMAT),
+            people=[user.integer_id() for user in self.people] if self.people else [],
             location= { 'lat':self.location.lat, 'lng':self.location.lon } if self.location else None
                 )
         return d

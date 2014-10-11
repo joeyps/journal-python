@@ -141,6 +141,13 @@ class BaseHandler(webapp2.RequestHandler):
     def send_json(self, obj):
         self.response.out.write(json.dumps(obj))
 
+class LogoutHandler(BaseHandler):
+    def get(self):
+        if self.current_user is not None:
+            self.session['user'] = None
+
+        self.redirect('/')
+
 class MainHandler(BaseHandler):
     def get(self):
         current_user = self.current_user
@@ -163,11 +170,13 @@ class EventHandler(BaseHandler):
                 return self.send_json(e.to_dict())
         self.send_json(False)
         
-    def post(self):
+    def post(self, id=None):
         user = self.current_user
         data = json.loads(self.request.get("data"))
         if user:
-            e = Event(parent=User.parse_key(user['id']))
+            #TODO check owner
+            owner = User.parse_key(user['id'])
+            e = Event(parent=owner)
             if 'desc' in data:
                 e.description = models.escape(data['desc'], link=True, br=True)
             if 'pid' in data:
@@ -181,6 +190,10 @@ class EventHandler(BaseHandler):
             if 'loc' in data:
                 loc = data['loc']
                 e.location = ndb.GeoPt(loc['lat'], loc['lng'])
+            if 'people' in data:
+                #TODO check if people who has tagged is friend, and no repeated
+                e.people = [User.parse_key(user_key) for user_key in data['people']]
+            e.who_can_see = [owner] + e.people
             e.put()
             return self.send_json(e.to_dict())
         self.send_json(False)
@@ -189,7 +202,7 @@ class EventsHandler(BaseHandler):
     def get(self):
         user = self.current_user
         if user:
-            q = Event.query(ancestor=User.parse_key(user['id'])).order(-Event.event_time)
+            q = Event.query(Event.who_can_see == User.parse_key(user['id'])).order(-Event.event_time)
             events = [r.to_dict() for r in q]
             return self.send_json(events)
         self.send_json(False)
@@ -284,6 +297,18 @@ class PhotoHandler(BaseHandler):
         if 'GPSLatitude' in exif and 'GPSLongitude' in exif:
             photo.location = ndb.GeoPt(exif['GPSLatitude'], exif['GPSLongitude'])
         photo.exif = exif
+        
+class FriendHandler(BaseHandler):
+    def get(self):
+        current_user = self.current_user
+        if current_user:
+            user = User.from_id(self.current_user['id'])
+            f = user.get_friends()
+            friends = []
+            for s in f.suggestions:
+                friends.append(s.get().to_dict())
+            return self.send_json(friends)
+        self.send_json(False)
 
 class DemoHandler(BaseHandler):
     def get(self):
@@ -291,16 +316,29 @@ class DemoHandler(BaseHandler):
         updated = []
         for i in range(len(results)):
             r = results[i]
+            if i >= 8:
+                continue
             r.location = ndb.GeoPt(i * 10, i * 10)
             updated.append(r)
         ndb.put_multi(updated)
+        
+        user = User(name="Noah Wu", profile_picture="https://fbcdn-profile-a.akamaihd.net/hprofile-ak-xpa1/v/t1.0-1/c50.0.200.200/p200x200/10306170_10152250910194398_4038395448859091170_n.jpg?oh=aac0612de87d78dacd02d4b3450da342&oe=54B45EE1&__gda__=1421432074_7efe9b9f1718f166cadd91f4abf28be9")
+        user.put()
+        current_user = self.current_user
+        if current_user:
+            user = User.from_id(self.current_user['id'])
+            f = user.get_friends()
+            f.suggestions.append(user.key)
+            f.put()
 
 app = webapp2.WSGIApplication([
     ('/_api/event/([^/]+)?', EventHandler),
     ('/_api/event', EventHandler),
     ('/_api/events', EventsHandler),
+    ('/_api/me/friends', FriendHandler),
     ('/_api/photo', PhotoHandler),
     ('/_dev/demo', DemoHandler),
+    ('/logout', LogoutHandler),
     ('/', MainHandler)
 ], debug=True
 , config=config)
