@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<title>{% block title %}Journal{% endblock %}</title>
+		<title>{% block title %}Those Days{% endblock %}</title>
 		<meta name="description" content="{% block description %}{% endblock %}"> 
 		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 		<meta http-equiv="pragma" content="no-cache" />
@@ -10,7 +10,7 @@
 		<link href='/static/css/default.css' rel='stylesheet' type='text/css'>
 		<style type="text/css">
 		#main { 
-			max-width:760px; 
+			max-width:700px; 
 			min-width:350px;
 			margin: 0 auto;
 		}
@@ -34,10 +34,28 @@
 			text-align:left;
 		}
 		
-		#events:after {
+		.events:after {
 			content:" ";
 			clear:both;
 			display:block;
+		}
+		
+		#events .year {
+			margin-bottom:20px;
+		}
+		
+		#events .year .header {
+			text-align: center;
+			padding-bottom: 30px;
+		}
+		
+		#events .year .header .year-num {
+			color: #fff;
+			background: #e63d35;
+			border-radius: 2px;
+			padding: 5px 10px;
+			display: inline-block;
+			font-size: 24px;
 		}
 		
 		#events .event {
@@ -66,16 +84,53 @@
 		}
 		
 		.events-place {
-			width:300px;
+			width:400px;
 			max-height:400px;
+			overflow-y:scroll;
+		}
+		
+		.events-place .header {
+			padding:20px 10px;
 		}
 		
 		.events-place .event {
-			
+			padding: 5px 0px;
 		}
 		
-		.events-place .event img.photo {
+		.events-place .event:after {
+			content:" ";
+			display:block;
+			clear:both;
+		}
+		
+		.events-place .event div.photo {
+			float:left;
 			width:100px;
+			height:100px;
+			background-size:cover;
+			margin:0px 5px;
+			border-radius:3px;
+		}
+		
+		.events-place .event .date {
+			float:right;
+			margin-right: 10px;
+		}
+		
+		.events-place .event .date .day {
+			font-size:24px;
+			text-align:center;
+		}
+		
+		.events-place .event div.detail {
+			padding:0 100px 0 100px;
+		}
+		
+		.events-place .event .desc {
+			padding: 10px 5px;
+			height:60px;
+			line-height:18px;
+			overflow:hidden;
 		}
 		
 		.event-single {
@@ -330,18 +385,25 @@
 			
 		    google.maps.event.addListener(mc, 'clusterclick', function(cluster) {
 				var div = $("<div class='events-place'>");
+				var center = cluster.getCenter();
+				div.append("<div class='header'>Near by " + center.lat() + "," + center.lng() + "</div>");
 				var markers = cluster.getMarkers();
 				for (var i in markers) {
 					var e = markers[i].event;
 					var v = $("<div class='event'></div>").appendTo(div);
 					if (e.photo) {
-						v.append("<img class='photo' src='" + e.photo.thumb_url + "300' />")
+						v.append("<div class='photo' style='background-image:url(" + e.photo.thumb_url + "300);'></div>")
 					}
+					var date = strptime(e.event_time, core.timezone);
+					v.append("<div class='date'><div class='month'>" + date.format("mmm").toUpperCase() + "</div>" + 
+									"<div class='day'>" + date.format("d") + "</div></div>")
+					v.append("<div class='detail'><div class='desc'>"
+						 					+ (e.description || "") + "</div></div>")
 				}
 				var wrap = $("<div>");
 				wrap.append(div);
 				core.Map.infobox.setContent(wrap.html());
-				core.Map.infobox.open(map, cluster.getCenter());
+				core.Map.infobox.open(map, center);
 		    });
 			return map;
 		};
@@ -399,12 +461,57 @@
 			me.view = view;
 			me.empty = empty;
 			me.loading = loading;
+			me.years = {};
 			me.view.on("click", ".event", function() {
 				if(me.opts.onItemClick) {
 					me.opts.onItemClick($(this).attr("key"));
 				}
 			});
 		}
+		
+		Events.prototype.getYear = function(year) {
+			var me = this;
+			if (!me.years[year]) {
+				me.years[year] = new Year(this, year);
+			}
+			return me.years[year];
+		};
+		
+		Events.prototype.addEvent = function(e) {
+			var me = this;
+			var event_time = strptime(e.event_time, core.timezone);
+			var year = me.getYear(event_time.getFullYear());
+			var eventsContainer = year.getEvents();
+			var events = eventsContainer.find(".event");
+			var view = me.inflateEvent(e);
+			if (events.length == 0) {
+				eventsContainer.append(view);
+				return;
+			}
+
+			var added = false;
+			events.each(function(i) {
+				var time = strptime($(this).attr("time"));
+				if (time < event_time) {
+					view.insertBefore($(this));
+					added = true;
+					return false;
+				}
+			});
+			if (!added)
+				eventsContainer.append(view);
+		};
+		
+		Events.prototype.inflateEvent = function(e) {
+			var date = strptime(e.event_time, core.timezone);
+			var eventView = $("<div class='event' time='" + date.format(core.DATETIME_FORMAT) + "'></div>");
+			eventView.attr("key", e.id);
+			eventView.append("<div class='date'><div class='month'>" + date.format("mmm").toUpperCase() + "</div>" + 
+							"<div class='day'>" + date.format("d") + "</div></div>")
+			if (e.photo)
+				eventView.css("background-image", "url(" + e.photo.thumb_url + "300)")
+			return eventView;
+		};
 		
 		Events.prototype.fetch = function() {
 			var me = this;
@@ -414,6 +521,7 @@
 				if (res) {
 					if (res.length > 0) {
 						me.empty.hide();
+						var year = null;
 						for (var i in res) {
 							var e = res[i];
 							if (e.location) {
@@ -422,12 +530,10 @@
 								core.Map.markers.push(marker);
 							}
 							var date = strptime(e.event_time, core.timezone);
-							var eventView = $("<div class='event'></div>").appendTo(me.view);
-							eventView.attr("key", e.id);
-							eventView.append("<div class='date'><div class='month'>" + date.format("mmm").toUpperCase() + "</div>" + 
-											"<div class='day'>" + date.format("d") + "</div></div>")
-							if (e.photo)
-								eventView.css("background-image", "url(" + e.photo.thumb_url + "300)")
+							if (!year || date.getFullYear() != year.getYear()) {
+								year = me.getYear(date.getFullYear());
+							}
+							var eventView = me.inflateEvent(e).appendTo(year.getEvents());
 						}
 					} else {
 						me.empty.show();
@@ -436,6 +542,39 @@
 				me.loading.hide();
 			});
 		};
+		
+		function Year(p, year) {
+			var view = $("<div class='year' year='" + year + "'></div>");
+			view.append("<div class='header'><span class='year-num'>" + year + "</span></div>");
+			view.append("<div class='events'></div>");
+			var years = p.view.find(".year");
+			if (years.length == 0) {
+				p.view.append(view);
+			} else {
+				var added = false;
+				years.each(function(i) {
+					var currentYear = parseInt($(this).attr('year'), 10);
+					if (currentYear < year) {
+						view.insertBefore($(this));
+						added = true;
+						return false;
+					}
+				});
+				if (!added)
+					p.view.append(view);
+			}
+			this.view = view;
+			this.year = year;
+			this.events = view.find(".events");
+		}
+		
+		Year.prototype.getYear = function() {
+			return this.year;
+		}
+		
+		Year.prototype.getEvents = function() {
+			return this.events;
+		}
 		
 		function ProgressBar(view) {
 			var me = this;
@@ -619,8 +758,8 @@
 				}
 			});
 			dlgEvent = new DialogEvent($("#dlg_event"), {
-				onEventAdded:function() {
-					events.fetch();
+				onEventAdded:function(event) {
+					events.addEvent(event);
 				}
 			});
 			
@@ -674,7 +813,7 @@
 		<div id="main">
 			<div class="buttons-main">
 				<button class="btn-new btn-post" style="float:left;">New Event</button>
-				<div class="buttons-mode"><button>Grid</button><button class="btn-map">Map</button></div>
+				<div class="buttons-mode"><button class="btn-map">Map</button></div>
 			</div>
 			<div id="events"></div>
 			<div id="empty" style="display:none;">
