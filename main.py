@@ -193,6 +193,11 @@ class EventHandler(BaseHandler):
             if 'people' in data:
                 #TODO check if people who has tagged is friend, and no repeated
                 e.people = [User.parse_key(user_key) for user_key in data['people']]
+            if 'tags' in data:
+                tag = Tag.from_user_id(owner.integer_id(), auto_add=True)
+                tags = [models.escape(t) for t in data['tags']]
+                tag.add_multi(tags)
+                e.tags = tags
             e.who_can_see = [owner] + e.people
             e.put()
             return self.send_json(e.to_dict())
@@ -309,6 +314,14 @@ class FriendHandler(BaseHandler):
                 friends.append(s.get().to_dict())
             return self.send_json(friends)
         self.send_json(False)
+        
+class TagHandler(BaseHandler):
+    def get(self):
+        current_user = self.current_user
+        if current_user:
+            tag = Tag.from_user_id(self.current_user['id'])
+            return self.send_json(tag.tags if tag else [])
+        self.send_json(False)
 
 class DemoHandler(BaseHandler):
     def get(self):
@@ -337,6 +350,7 @@ app = webapp2.WSGIApplication([
     ('/_api/events', EventsHandler),
     ('/_api/me/friends', FriendHandler),
     ('/_api/photo', PhotoHandler),
+    ('/_api/tag', TagHandler),
     ('/_dev/demo', DemoHandler),
     ('/logout', LogoutHandler),
     ('/', MainHandler)

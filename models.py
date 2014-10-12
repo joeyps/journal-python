@@ -276,23 +276,6 @@ class Journey(BaseModel):
     
     def is_owner(self, uid):
         return self.key.parent().integer_id() == uid
-    
-    def has_day(self, date):
-        return DayOfJourney.query(DayOfJourney.date == date, ancestor=self.key).count() > 0
-    
-    def add_place_to_day(self, date=None, place=None):
-        if not self.has_day(date):
-            return False
-    
-        """d = days[0]
-        if not d.places:
-            d.places = []
-        for p in d.places:
-            if place['place_id'] == p['place_id']:
-                return True
-        d.places.append(place)"""
-        #d.put()
-        return True
         
     def set_photos_place(self, ids, place):
         keys = []
@@ -305,18 +288,6 @@ class Journey(BaseModel):
             p.place = place
         ndb.put_multi(photos)
         return True
-        
-    def get_photos(self, date=None):
-        if not date:
-            return Photo.query(ancestor=self.key)
-            
-        date_start = datetime(date.year, date.month, date.day)
-        date_end = date_start + timedelta(days=1)
-        q = Photo.query(Photo.original_time >= date_start, 
-                        Photo.original_time < date_end,
-                        ancestor=self.key).order(Photo.original_time)
-        photos = [p.to_dict() for p in q]
-        return photos
         
     def get_highlight_photos(self, count=8):
         photos = Photo.query(ancestor=self.key).fetch(count*2)
@@ -590,11 +561,45 @@ class Notification(BaseModel):
         d['message_str'] = message_str
         d['message_link'] = message_link
         return d
+
+class Tag(BaseModel):
+    tags = ndb.StringProperty(repeated=True)
+    
+    def add_multi(self, tags):
+        #TODO tag name doesn't accept symbol (.%^&*()@#$)
+        self.tags = self.tags or []
+        for tag in tags:
+            if tag not in self.tags:
+                self.tags.append(tag)
+        self.tags = sorted(self.tags)
+        self.put()
+    
+    @staticmethod
+    def from_user_id(user_id, auto_add=False):
+        user_key = User.parse_key(user_id)
+        results = Tag.query(ancestor=user_key).fetch(1)
+        if len(results) > 0:
+            return results[0]
+        elif auto_add:
+            tag = Tag(parent=user_key, tags=[])
+            tag.put()
+            return tag
+    
+    @classmethod        
+    def _get_parent_cls(cls):
+        return User      
+    
+    def to_dict(self):
+        d = dict(
+            tags=self.tags if self.tags else []
+                )
+        return d
         
 class Event(BaseModel):
     description = ndb.TextProperty()
     photo = ndb.KeyProperty(kind=Photo)
     people = ndb.KeyProperty(kind=User, repeated=True)
+    tags = ndb.StringProperty(repeated=True)
     event_time = ndb.DateTimeProperty()
     location = ndb.GeoPtProperty()
     who_can_see = ndb.KeyProperty(kind=User, repeated=True)
@@ -612,6 +617,7 @@ class Event(BaseModel):
             photo=self.photo.get().to_dict() if self.photo else None,
             event_time=self.event_time.strftime(DATETIME_FORMAT),
             people=[user.integer_id() for user in self.people] if self.people else [],
+            tags=(self.tags or []),
             location= { 'lat':self.location.lat, 'lng':self.location.lon } if self.location else None
                 )
         return d

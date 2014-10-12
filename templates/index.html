@@ -149,6 +149,27 @@
 			padding:20px 10px;;
 		}
 		
+		.tag {
+			background-color: #efefef;
+			border: 1px solid #ccc;
+			color: #777;
+			border-radius: 9px;
+			padding: 2px 8px;
+			margin:2px;
+			display: inline-block;
+			cursor: pointer;
+		}
+		
+		.tag+.tag {
+			margin-left:5px;
+		}
+		
+		.tag.active {
+			background-color: #3a91f4;
+			border-color: #284c71;
+			color: #fff;
+		}
+		
 		.dlg {
 			position:fixed;
 			top:0;
@@ -224,7 +245,8 @@
 			position:relative;
 		}
 		
-		.dlg .dlg-event-body .btn-icon svg {
+		.dlg .dlg-event-body .btn-icon>svg,
+		.dlg .dlg-event-body .btn-icon .icon-photo {
 			fill:#ccc;
 			opacity:0.7;
 		}
@@ -233,7 +255,8 @@
 			opacity:1;
 		}
 		
-		.dlg .dlg-event-body .btn-icon.active svg {
+		.dlg .dlg-event-body .btn-icon.active>svg,
+		.dlg .dlg-event-body .btn-icon.active .icon-photo {
 			fill:#dd4b39;
 			opacity:1;
 		}
@@ -268,7 +291,7 @@
 		}
 		
 		.dlg .dlg-event-photo {
-			background-color:#ccc;
+			background-color:#f5f5f5;
 			min-height:200px;
 			max-height:400px;
 			position:relative;
@@ -397,6 +420,36 @@
 		
 		.menu-people .buttons {
 			text-align:right;
+		}
+		
+		.menu-tags {
+			width:250px;
+			right:-120px;
+		}
+		
+		.menu-tags .input-text input {
+			border-width: 0px;
+			width: 100%;
+			box-sizing: border-box;
+			padding-right: 30px;
+			margin-top: 5px;
+		}
+		
+		.menu-tags .input-text .btn-add {
+			position: absolute;
+			right: 6px;
+			top: 8px;
+		}
+		
+		.menu-tags .input-text .btn-add svg {
+			width: 20px;
+			height: 20px;
+			stroke: #ccc;
+			fill: none;
+		}
+		
+		.menu-tags .input-text .btn-add.active svg {
+			stroke: #449c2f;
 		}
 		
 		</style>
@@ -568,6 +621,28 @@
 				return core.Friend.users[id];
 			}
 		};
+		
+		core.Tag = {
+			tags:{},
+			add:function(tagname) {
+				core.Tag.tags[tagname] = tagname;
+			},
+			lookup:function(id) {
+				return core.Tag.tags[id];
+			},
+			update:function() {
+				core.Tag.tags = {};
+				core.api("/tag", "GET", function(res) {
+					if (res) {
+						for (var i in res) {
+							core.Tag.add(res[i]);
+						}
+					}
+				});
+			}
+		};
+		
+		core.Tag.update();
 		
 		core.api("/me/friends", "GET", function(res) {
 			if (res) {
@@ -757,15 +832,22 @@
 			me.btnPhoto = me.view.find(".btn-photo");
 			me.btnPlace = me.view.find(".btn-place");
 			me.btnPeople = me.view.find(".btn-people");
+			me.btnTag = me.view.find(".btn-tag");
 			me.photo = me.view.find(".dlg-event-photo");
 			me.place = me.view.find(".dlg-event-place");
 			me.people = me.view.find(".dlg-event-people");
+			me.tags = me.view.find(".dlg-event-tags");
 			me.filePhoto = me.btnPhoto.find(".file-photo");
 			me.mapimage = me.place.find("img");
 			me.image = me.photo.find("img");
 			me.progressbar = new ProgressBar(me.photo.find(".progressbar"));
 			me.btnPost = me.view.find(".buttons-act .btn-post");
 			me.loading = me.view.find(".dlg-event-loading");
+			me.tagPicker = new TagPicker(me.view.find(".menu-tags"));
+			core.events.bind(me.tagPicker, "change", function() {
+				var tags = me.tagPicker.getSelected();
+				me.setTags(tags);
+			});
 			
 			me.view.click(function() {
 				me.dismiss();
@@ -785,10 +867,18 @@
 				users.each(function() {
 					people.push($(this).attr("key"));
 				});
+				
+				var selected_tags = [];
+				var tags = me.tags.find(".tag");
+				tags.each(function() {
+					selected_tags.push($(this).attr("key"));
+				});
+				
 				var data = { desc: me.editable.html(), 
 							pid:me.photo.attr("key"), 
 							event_time:me.datetime.format(core.DATETIME_FORMAT),
-							people:people };
+							people:people,
+							tags:selected_tags };
 				if (me.loc) {
 					data.loc = me.loc;
 				}
@@ -843,6 +933,7 @@
 			me.photo.hide();
 			me.place.hide();
 			me.setPeople([]);
+			me.setTags([]);
 			me.photo.attr("key", "");
 			me.view.find(".btn-icon").removeClass("active");
 			me.loading.hide();
@@ -871,6 +962,7 @@
 							me.setLocation(res.location);
 						}
 						me.setPeople(res.people);
+						me.setTags(res.tags);
 					}
 					me.loading.hide();
 				});
@@ -910,6 +1002,20 @@
 			}
 		};
 		
+		DialogEvent.prototype.setTags = function(tags) {
+			var me = this;
+			me.tags.html("");
+			if (tags.length > 0) { 
+				me.btnTag.addClass("active");
+				for (var i in tags) {
+					var tag = tags[i];
+					me.tags.append("<span class='tag noselect active' key='" + tag +"'>" + tag + "</span>");
+				}
+			} else {
+				me.btnTag.removeClass("active");
+			}
+		};
+		
 		DialogEvent.prototype.setLocation = function(loc) {
 			var me = this;
 			me.loc = loc;
@@ -930,6 +1036,81 @@
 		
 		DialogEvent.prototype.dismiss = function() {
 			this.view.hide();
+		}
+		
+		function TagPicker(view) {
+			var me = this;
+			this.view = view;
+			this.tags = view.find(".tags");
+			this.input = view.find("input[type=text]");
+			this.btnAdd = view.find(".btn-add");
+			this.view.on("before_show", function() {
+				me.setTags(core.Tag.tags);
+			});
+			
+			this.tags.on("click", ".tag", function() {
+				$(this).toggleClass("active");
+			});
+			
+			this.inputAlarm = new Alarm(function() {
+				if (me.input.val().trim() != "") {
+					me.btnAdd.addClass("active");
+				} else {
+					me.btnAdd.removeClass("active");
+				}
+			});
+			this.input.keyup(function(e) {
+				me.inputAlarm.cancel();
+				me.inputAlarm.start(200);
+				if (e.which == 13 && $(this).val().trim() != "") {
+					var tag = me.addTag($(this).val());
+					tag.addClass("active")
+					$(this).val("");
+				}
+			});
+			
+			this.view.find(".btn-post").click(function() {
+				core.events.trigger(me, "change");
+				me.view.hide();
+			});
+			
+			this.view.find(".btn-cancel").click(function() {
+				me.view.hide();
+			});
+		}
+		
+		TagPicker.prototype.setTags = function(tags) {
+			var me = this;
+			me.tags.html("");
+			for (var i in tags) {
+				var tag = tags[i];
+				me.tags.append("<span class='tag noselect' key='" + tag +"'>" + tag + "</span>");
+			}
+		}
+		
+		TagPicker.prototype.addTag = function(tagname) {
+			var me = this;
+			var tag = me.tags.find(".tag[key=" + tagname + "]")
+			if (tag.length > 0) {
+				tag.addClass("active");
+			} else {
+				tag = $("<span class='tag noselect' key='" + tagname +"'>" + tagname + "</span>");
+				me.tags.prepend(tag);	
+			}
+			return tag;
+		}
+		
+		TagPicker.prototype.setSelected = function(tags) {
+			
+		}
+		
+		TagPicker.prototype.getSelected = function() {
+			var tags = [];
+			var me = this;
+			me.tags.find(".tag.active").each(function() {
+				tags.push($(this).attr("key"));
+			});
+			return tags;
 		}
 		
 		$(function() {
@@ -1034,6 +1215,7 @@
 			dlgEvent = new DialogEvent($("#dlg_event"), {
 				onEventAdded:function(event) {
 					events.addEvent(event);
+					core.Tag.update();
 				}
 			});
 			
@@ -1103,16 +1285,16 @@
 						<span class="btn-date"></span>
 						<span class="btn-time"></span>
 					</div>
+					<div class="dlg-event-photo">
+						<img />
+						<div class="progressbar"><div class="progress"></div></div>
+					</div>
 					<div class="editable" contenteditable="plaintext-only">
 					</div>
 					<div class="dlg-event-desc">
 						<span class="dlg-event-desc-body"></span><span class="dlg-btn-edit">Edit</span>
 					</div>
 					<div class="dlg-event-people">
-					</div>
-					<div class="dlg-event-photo">
-						<img />
-						<div class="progressbar"><div class="progress"></div></div>
 					</div>
 					<div class="dlg-event-place">
 						<img />
@@ -1167,10 +1349,30 @@
 								</g>
 								</svg>
 							</span>
-							<span class="btn-icon btn-tag">
+							<span class="btn-icon btn-tag btn-menu" target=".menu-tags">
 							<svg class="icon-tag" xmlns="http://www.w3.org/2000/svg" version="1.1" width="32" height="32" data-icon="tag" viewBox="0 0 32 32">
 							  <path d="M.5 0c-.3 0-.5.2-.5.5v11c0 .3.206.706.406.906l19.281 19.281c.14.14.33.182.5.125h.031l11.594-11.594c.005-.011-.004-.02 0-.031.057-.17.015-.36-.125-.5l-19.281-19.281c-.2-.2-.606-.406-.906-.406h-11zm6 4c1.4 0 2.5 1.1 2.5 2.5s-1.1 2.5-2.5 2.5-2.5-1.1-2.5-2.5 1.1-2.5 2.5-2.5z"/>
 							</svg>
+							<div class="menu menu-tags">
+								<div class="input-text">
+									<input type="text" autocomplete="off" />
+									<span class="btn-add">
+										<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
+										<g id="Plus">
+											<circle stroke-width="6" stroke-miterlimit="10" cx="50" cy="50" r="47"/>
+											<line stroke-width="6" stroke-miterlimit="10" x1="50" y1="19" x2="50" y2="79"/>
+											<line stroke-width="6" stroke-miterlimit="10" x1="80" y1="50" x2="20" y2="50"/>
+										</g>
+										</svg>
+									</span>
+								</div>
+								<div class="tags">
+								</div>
+								<div class="buttons">
+									<button class="btn-cancel">Cancel</button>
+									<button class="btn-post">Apply</button>
+								</div>
+							</div>
 							</span>
 						</div>
 						<div class="buttons-act">
