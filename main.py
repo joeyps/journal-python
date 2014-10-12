@@ -165,8 +165,10 @@ class EventHandler(BaseHandler):
     def get(self, id):
         user = self.current_user
         if user and id:
-            e = Event.from_id(id, parent=user['id'])
-            if e:
+            user_key = User.parse_key(user['id'])
+            results = Event.query(Event._key == Event.parse_key(id)).filter(Event.who_can_see == user_key).fetch(1)
+            if len(results) > 0:
+                e = results[0]
                 return self.send_json(e.to_dict())
         self.send_json(False)
         

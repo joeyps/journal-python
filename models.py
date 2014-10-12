@@ -607,6 +607,17 @@ class Event(BaseModel):
     updated_time = ndb.DateTimeProperty(auto_now=True)
     
     @classmethod        
+    def parse_key(cls, urlsafe, parent=None):
+        try:
+            return ndb.Key(urlsafe=urlsafe)
+        except ValueError:
+            return None
+        
+    @property
+    def id(self):
+        return self.key.urlsafe()
+    
+    @classmethod        
     def _get_parent_cls(cls):
         return User      
     
