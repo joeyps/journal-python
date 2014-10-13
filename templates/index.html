@@ -844,6 +844,7 @@
 			me.btnPost = me.view.find(".buttons-act .btn-post");
 			me.loading = me.view.find(".dlg-event-loading");
 			me.tagPicker = new TagPicker(me.view.find(".menu-tags"));
+
 			core.events.bind(me.tagPicker, "change", function() {
 				var tags = me.tagPicker.getSelected();
 				me.setTags(tags);
@@ -855,6 +856,18 @@
 			
 			me.view.find(".dlg-event-body").click(function(e) {
 				e.stopPropagation();
+			})
+			.on('dragenter', function() {
+				me.photo.show();
+			})
+			.on('dragover', function() {
+			})
+			.on('dragleave', function() {
+			})
+			.on('drop', function(e) {
+				e.preventDefault();
+				var files = e.target.files || e.originalEvent.dataTransfer.files;
+				me.uploadPhotoFiles(files);
 			});
 			
 			me.btnPost.click(function() {
@@ -922,7 +935,7 @@
 			});
 			
 			me.filePhoto.change(function() {
-				me.um.start(this.files, "/_api/photo");
+				me.uploadPhotoFiles(this.files);
 			});
 		}
 		
@@ -1028,6 +1041,11 @@
 			var q = "center=" + loc.lat + "," + loc.lng + "&zoom=13&size=" + w + "x" + h + "&maptype=roadmap" + 
 			"&markers=" + loc.lat + "," + loc.lng;
 			me.mapimage.attr("src", url + q);
+		};
+		
+		DialogEvent.prototype.uploadPhotoFiles = function(files) {
+			var me = this;
+			me.um.start(files, "/_api/photo");
 		};
 		
 		DialogEvent.prototype.show = function() {
@@ -1140,6 +1158,22 @@
 			
 			$(document).click(function() {
 				$(".menu").hide();
+			})
+			.on('dragenter', function(e) {
+				e.stopPropagation();
+				e.preventDefault();
+			})
+			.on('dragover', function(e) {
+				e.stopPropagation();
+				e.preventDefault();
+			})
+			.on('dragleave', function(e) {
+				e.stopPropagation();
+				e.preventDefault();
+			})
+			.on('drop', function(e) {
+				e.stopPropagation();
+				e.preventDefault();
 			});
 			
 			var menuPeople = core.Menu.lookup($(".menu-people").attr("menu-id"));
