@@ -30,6 +30,85 @@ if (!String.prototype.format) {
 	};
 }
 
+core = {
+	DATE_FORMAT:"yyyy-mm-dd",
+	DATETIME_FORMAT:"yyyy-mm-dd hh:MM:ss",
+	timezone:(-new Date().getTimezoneOffset()/60),
+	events: {
+		bind:function(obj, type, callback) {
+			if (!obj.event) {
+				obj.event = {};
+			}
+			obj.event[type] = callback;
+		},
+		unbind:function(obj, type) {
+			if (!obj.event) {
+				obj.event = {};
+			} else {
+				obj.event[type] = null;
+			}
+		},
+		trigger:function(obj, type, args) {
+			if (!obj.event) {
+				obj.event = {};
+			} else {
+				var cb = obj.event[type];
+				if (cb) {
+					cb(args);
+				}
+			}
+		}
+	}
+};
+
+core.api = function() {
+	if(arguments.length < 2) {
+		return;
+	}
+
+	var args = Array.prototype.slice.call(arguments);
+
+	var path = "/_api" + args[0];
+	var method = args[1];
+
+	var opt_argv = args.slice(2, args.length);
+
+    if (!opt_argv)
+    opt_argv = new Array();
+
+    // Find if the last arg is a callback function; save it
+    var callback = null;
+    var len = opt_argv.length;
+    if (len > 0 && typeof opt_argv[len-1] === 'function') {
+        callback = opt_argv[len-1];
+        opt_argv.length--;
+    }
+
+	var params = null;
+	if(opt_argv.length > 0) {
+		params = opt_argv[0]
+	}
+
+	var opts = {
+		url:path,
+		type:method
+	}
+
+	if(params != null) {
+		opts['data'] = { data:JSON.stringify(params) };
+	}
+
+	var that = this;
+	$.ajax(opts).done(function(response) {
+		var res = JSON.parse(response);
+		if(callback) {
+			callback(res);
+		}
+	}).fail(function(jqxhr, textStatus, errorThrown) {
+
+	});
+};
+
 function Jourmap() {
 	var me = this;
 	me.DATE_FORMAT = "yyyy-mm-dd";
@@ -41,54 +120,6 @@ function Jourmap() {
 		}
 	};
 }
-
-Jourmap.prototype.api = function() {
-	if(arguments.length < 2) {
-		return;
-	}
-	
-	var args = Array.prototype.slice.call(arguments);
-	
-	var path = "/_api" + args[0];
-	var method = args[1];
-	
-	var opt_argv = args.slice(2, args.length);
-	
-    if (!opt_argv)
-    opt_argv = new Array();
-
-    // Find if the last arg is a callback function; save it
-    var callback = null;
-    var len = opt_argv.length;
-    if (len > 0 && typeof opt_argv[len-1] === 'function') {
-        callback = opt_argv[len-1];
-        opt_argv.length--;
-    }
-	
-	var params = null;
-	if(opt_argv.length > 0) {
-		params = opt_argv[0]
-	}
-	
-	var opts = {
-		url:path,
-		type:method
-	}
-	
-	if(params != null) {
-		opts['data'] = { data:JSON.stringify(params) };
-	}
-	
-	var that = this;
-	$.ajax(opts).done(function(response) {
-		var res = JSON.parse(response);
-		if(callback) {
-			callback(res);
-		}
-	}).fail(function(jqxhr, textStatus, errorThrown) {
-		
-	});
-};
 
 JM = new Jourmap();
 

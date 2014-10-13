@@ -12,6 +12,20 @@ indexes:
 
 - kind: Event
   properties:
+  - name: people
+  - name: who_can_see
+  - name: event_time
+    direction: desc
+
+- kind: Event
+  properties:
+  - name: tags
+  - name: who_can_see
+  - name: event_time
+    direction: desc
+
+- kind: Event
+  properties:
   - name: who_can_see
   - name: event_time
     direction: desc

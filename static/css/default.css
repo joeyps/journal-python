@@ -77,6 +77,10 @@ div.editable:focus {
 	border-color:#4285f4;
 }
 
+.input-text input[type=text] {
+	border-width:0px;
+}
+
 button {
 	-webkit-box-shadow: 0 1px 0 rgba(0,0,0,.05);
 	box-shadow: 0 1px 0 rgba(0,0,0,.05);

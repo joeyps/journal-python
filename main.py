@@ -210,6 +210,14 @@ class EventsHandler(BaseHandler):
         user = self.current_user
         if user:
             q = Event.query(Event.who_can_see == User.parse_key(user['id'])).order(-Event.event_time)
+            tags = self.request.get("tags")
+            if tags:
+                for tag in tags.split(","):
+                    q = q.filter(Event.tags == tag)
+            users = self.request.get("u")
+            if users:
+                for user_id in users.split(","):
+                    q = q.filter(Event.people == User.parse_key(user_id))
             events = [r.to_dict() for r in q]
             return self.send_json(events)
         self.send_json(False)

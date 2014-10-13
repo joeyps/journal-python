@@ -19,14 +19,35 @@
 			text-align: center; 
 		}
 		
-		.buttons-main:after {
-			clear:both;
-			display:block;
-			content:" ";
+		.buttons-main {
+			position:relative;
 		}
 		
-		.buttons-mode {
-			text-align:right;
+		.buttons-main .input-text {
+			margin-right: 165px;
+			max-width: 400px;
+			padding-left:30px;
+		}
+		
+		.buttons-main .input-text input[type=text] {
+			width:100%;
+			box-sizing:border-box;
+			font-size: 14px;
+		}
+		
+		.buttons-main .input-text .icon-search {
+			width: 20px;
+			height: 20px;
+			position: absolute;
+			top: 9px;
+			left: 7px;
+			fill: #dc2528;
+		}
+		
+		.buttons-right {
+			position:absolute;
+			right:2px;
+			top:2px;
 		}
 		
 		#events {
@@ -75,6 +96,7 @@
 			left:10px;
 			bottom:8px;
 			color:#fff;
+			text-shadow: 0px 0px 1px #444;
 		}
 		
 		#events .event .date .day,
@@ -452,6 +474,14 @@
 			stroke: #449c2f;
 		}
 		
+		.autocomplete-suggestions { border: 1px solid #999; background: #FFF; overflow: auto; }
+		.autocomplete-suggestion { padding: 3px 5px; white-space: nowrap; overflow: hidden; }
+		.autocomplete-suggestion img { width:40px; height:40px; float:left; border-radius:2px;}
+		.autocomplete-suggestion .autocomplete-suggestion-info { margin-left:50px; margin-top: 12px;}
+		.autocomplete-suggestion:after { content:" "; display:block; clear:both;}
+		.autocomplete-selected { background: #F0F0F0; }
+		.autocomplete-suggestions strong { font-weight: normal; color: #3399FF; }
+		
 		</style>
 		<script type="text/javascript" src="/static/js/assets.js"></script>
 		<script type="text/javascript" src="/static/js/date.format.js"></script>
@@ -459,38 +489,9 @@
 		<script type="text/javascript" src="/static/js/markerclusterer.js"></script>
 		<script type="text/javascript" src="/static/js/infobox.js"></script>
 		<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+		<script type="text/javascript" src="/static/js/jquery.autocomplete.js"></script>
 		<script type="text/javascript" src="/static/js/core.js"></script>
 		<script type="text/javascript">
-		core = {
-			DATE_FORMAT:"yyyy-mm-dd",
-			DATETIME_FORMAT:"yyyy-mm-dd hh:MM:ss",
-			timezone:(-new Date().getTimezoneOffset()/60),
-			events: {
-				bind:function(obj, type, callback) {
-					if (!obj.event) {
-						obj.event = {};
-					}
-					obj.event[type] = callback;
-				},
-				unbind:function(obj, type) {
-					if (!obj.event) {
-						obj.event = {};
-					} else {
-						obj.event[type] = null;
-					}
-				},
-				trigger:function(obj, type, args) {
-					if (!obj.event) {
-						obj.event = {};
-					} else {
-						var cb = obj.event[type];
-						if (cb) {
-							cb(args);
-						}
-					}
-				}
-			}
-		};
 		
 		core.Map = {
 			createMarker:function(opts) {
@@ -564,53 +565,6 @@
 		    });
 			return map;
 		};
-		core.api = function() {
-			if(arguments.length < 2) {
-				return;
-			}
-	
-			var args = Array.prototype.slice.call(arguments);
-	
-			var path = "/_api" + args[0];
-			var method = args[1];
-	
-			var opt_argv = args.slice(2, args.length);
-	
-		    if (!opt_argv)
-		    opt_argv = new Array();
-
-		    // Find if the last arg is a callback function; save it
-		    var callback = null;
-		    var len = opt_argv.length;
-		    if (len > 0 && typeof opt_argv[len-1] === 'function') {
-		        callback = opt_argv[len-1];
-		        opt_argv.length--;
-		    }
-	
-			var params = null;
-			if(opt_argv.length > 0) {
-				params = opt_argv[0]
-			}
-	
-			var opts = {
-				url:path,
-				type:method
-			}
-	
-			if(params != null) {
-				opts['data'] = { data:JSON.stringify(params) };
-			}
-	
-			var that = this;
-			$.ajax(opts).done(function(response) {
-				var res = JSON.parse(response);
-				if(callback) {
-					callback(res);
-				}
-			}).fail(function(jqxhr, textStatus, errorThrown) {
-		
-			});
-		};
 		
 		core.Friend = {
 			users:{},
@@ -674,6 +628,86 @@
 				core.events.trigger(me, "show");
 			});
 		}
+		
+		function SearchBar(view) {
+			var me = this;
+			me.view = view;
+			me.filters = me.view.find(".filters");
+			me.input = me.view.find("#input-search");
+			me.input.autocomplete({
+				lookup:[],
+				noCache: true,//TODO use cache
+				triggerSelectOnValidInput: false,
+			    onSelect: function (suggestion) {
+					var type = suggestion.type;
+					if (type == 'tag') {
+						var tag = suggestion.data;
+						me.filters.append("<span class='tag active filter' key='" + tag + "' type='tag'>" + tag + "</span>");
+						var w = me.view.width() - me.filters.width() - parseInt(me.view.css("padding-left").replace("px", ""), 10);
+						me.input.css({width:w + "px"});
+						me.input.val("");
+					} else if (type == 'user') {
+						var user = suggestion.data;
+						me.filters.append("<span class='tag active filter' key='" + user.id
+							 						+ "' type='user'>" + user.name + "</span>");
+					}
+					var w = me.view.width() - me.filters.width() - parseInt(me.view.css("padding-left").replace("px", ""), 10);
+					me.input.css({width:w + "px"});
+					me.input.val("");
+					me.onFilterChanged();
+			    },
+				onCreateView: function(value, suggestions) {
+					var html = "";
+					for (var i in suggestions) {
+						var suggestion = suggestions[i];
+						var type = suggestion.type;
+						if (type === 'user') {
+							html += '<div class="autocomplete-suggestion" data-index="' + i + '">' + 
+									'<img src="' + suggestion.data.profile_picture + '" />' + 
+									'<div class="autocomplete-suggestion-info">With ' + $.Autocomplete.formatResult(suggestion, value) +
+									'</div></div>';
+						} else if (type === 'tag') {
+							html += '<div class="autocomplete-suggestion" data-index="' + i + '">' + 
+									'<div>' + $.Autocomplete.formatResult(suggestion, value) +
+									'</div></div>';
+						}
+					}
+					return html;
+				}
+			}).focus(function() {
+				var lookup = [];
+				var friends = core.Friend.users;
+				for (var i in friends) {
+					var user = friends[i];
+					lookup.push({ value:user.name, data:user, type:'user' });
+				}
+				var tags = core.Tag.tags;
+				for (var i in tags) {
+					var tag = tags[i];
+					lookup.push({ value:tag, data:tag, type:'tag' });
+				}
+				var opts = {'lookup':lookup};
+				$(this).autocomplete('setOptions', opts);
+			}).keydown(function(e) {
+				if (e.which == 8 && $(this).val().trim() == "") {
+					me.filters.find(".filter:last").remove();
+					me.onFilterChanged();
+				}
+			});
+		}
+		
+		SearchBar.prototype.getFilters = function() {
+			var me = this;
+			var filters = [];
+			me.filters.find(".filter").each(function() {
+				filters.push({ type:$(this).attr("type"), key:$(this).attr("key")});
+			});
+			return filters;
+		};
+		
+		SearchBar.prototype.onFilterChanged = function() {
+			core.events.trigger(this, "filter_change");
+		};
 		
 		function Events(view, empty, loading, opts) {
 			var me  = this;
@@ -745,11 +779,39 @@
 			}
 		};
 		
-		Events.prototype.fetch = function() {
+		Events.prototype.clear = function() {
 			var me = this;
 			me.view.html("");
+			me.years = {};
+		};
+		
+		Events.prototype.fetch = function(filters) {
+			var me = this;
+			me.clear();
 			me.loading.show();
-			core.api("/events", "GET", function(res) {
+			var api = "/events";
+			if (filters) {
+				var tags = [];
+				var users = [];
+				for (var i in filters) {
+					var f = filters[i];
+					if (f.type == "user") {
+						users.push(f.key);
+					} else if (f.type == "tag") {
+						tags.push(f.key);
+					}
+				}
+				var q = "";
+				if (tags.length > 0) {
+					q += "tags=" + tags.join(",");
+				}
+				if (users.length > 0) {
+					if (q) q += "&";
+					q += "u=" + users.join(",");
+				}
+				if (q) api += ("?" + q);
+			}
+			core.api(api, "GET", function(res) {
 				if (res) {
 					if (res.length > 0) {
 						var year = null;
@@ -844,6 +906,11 @@
 			me.btnPost = me.view.find(".buttons-act .btn-post");
 			me.loading = me.view.find(".dlg-event-loading");
 			me.tagPicker = new TagPicker(me.view.find(".menu-tags"));
+			me.loader = new Image();
+			me.loader.onload = function() {
+				me.image.attr("src", me.loader.src);
+				me.image.show();
+			};
 
 			core.events.bind(me.tagPicker, "change", function() {
 				var tags = me.tagPicker.getSelected();
@@ -993,8 +1060,14 @@
 			var me = this;
 			me.btnPhoto.addClass("active");
 			me.photo.show();
-			me.image.show();
-			me.image.attr("src", photo.thumb_url + "600");
+			var url = photo.thumb_url + "600";
+			if (me.loader.src === url) {
+				me.image.attr("src", url);
+				me.image.show();
+			} else {
+				me.loader.src = url;
+				me.image.hide();
+			}
 			me.progressbar.view.hide();
 			me.photo.attr("key", photo.id);
 		};
@@ -1132,6 +1205,8 @@
 		}
 		
 		$(function() {
+			var searchbar = new SearchBar($("#searchbar"));
+			
 			var dlgEvent = null;
 			$(".btn-menu").on("click", function(e) {
 				e.stopPropagation();
@@ -1261,6 +1336,10 @@
 			
 			events.fetch();
 			
+			core.events.bind(searchbar, "filter_change", function() {
+				events.fetch(searchbar.getFilters());
+			});
+			
 			$(".dlg").on("mousewheel DOMMouseScroll", function(e) {
 				var scrollTo = null;
 
@@ -1302,8 +1381,19 @@
     <body>
 		<div id="main">
 			<div class="buttons-main">
-				<button class="btn-new btn-post" style="float:left;">New Event</button>
-				<div class="buttons-mode"><button class="btn-map">Map</button></div>
+				<div class="buttons-right">
+					<button class="btn-map">Map</button>
+					<button class="btn-new btn-post">New Event</button>
+				</div>
+				<div id="searchbar" class="input-text">
+					<svg class="icon-search" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Your_Icon" x="0px" y="0px" width="40px" height="40px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
+					<path d="M99.337,89.242L68.052,57.956c4.063-6.057,6.246-13.179,6.246-20.636c0-9.923-3.864-19.252-10.881-26.269  C56.4,4.035,47.072,0.171,37.149,0.171c-9.923,0-19.252,3.864-26.269,10.88C3.864,18.068,0,27.397,0,37.32  s3.864,19.251,10.881,26.268s16.345,10.881,26.269,10.881c7.541,0,14.737-2.234,20.838-6.385l31.255,31.253  c1.055,1.056,2.995,0.826,4.332-0.511l5.252-5.252C100.164,92.237,100.393,90.297,99.337,89.242z M37.149,64.405  c-14.936,0-27.086-12.15-27.086-27.085s12.151-27.086,27.086-27.086c14.935,0,27.085,12.151,27.085,27.086  S52.084,64.405,37.149,64.405z"/>
+					</svg>
+					<span class="filters"></span><input id="input-search" type="text" placeholder="tag/people/content" autocomplete="off" />
+					<span class="btn-add">
+						
+					</span>
+				</div>
 			</div>
 			<div id="events"></div>
 			<div id="empty" style="display:none;">
