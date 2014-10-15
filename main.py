@@ -178,7 +178,11 @@ class EventHandler(BaseHandler):
         if user:
             #TODO check owner
             owner = User.parse_key(user['id'])
-            e = Event(parent=owner)
+            e = None
+            if id:
+                e = Event.from_id(id)
+            else:
+                e = Event(parent=owner)
             if 'desc' in data:
                 e.description = models.escape(data['desc'], link=True, br=True)
             if 'pid' in data:

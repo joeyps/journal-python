@@ -651,8 +651,7 @@
 						me.filters.append("<span class='tag active filter' key='" + user.id
 							 						+ "' type='user'>" + user.name + "</span>");
 					}
-					var w = me.view.width() - me.filters.width() - parseInt(me.view.css("padding-left").replace("px", ""), 10);
-					me.input.css({width:w + "px"});
+					
 					me.input.val("");
 					me.onFilterChanged();
 			    },
@@ -706,6 +705,10 @@
 		};
 		
 		SearchBar.prototype.onFilterChanged = function() {
+			var me = this;
+			var w = me.view.width() - me.filters.width() - parseInt(me.view.css("padding-left").replace("px", ""), 10);
+			me.input.css({width:w + "px"});
+			
 			core.events.trigger(this, "filter_change");
 		};
 		
@@ -888,7 +891,9 @@
 			me.view = view;
 			me.editable = me.view.find(".editable");
 			me.desc = me.view.find(".dlg-event-desc");
-			me.descbody = me.view.find(".dlg-event-desc-body");
+			me.desccontent = me.desc.find(".desc-content");
+			me.descbody = me.desc.find(".dlg-event-desc-body");
+			me.descbuttons = me.desc.find(".buttons-desc");
 			me.date = me.view.find(".btn-date");
 			me.time = me.view.find(".btn-time");
 			me.btnPhoto = me.view.find(".btn-photo");
@@ -937,32 +942,37 @@
 				me.uploadPhotoFiles(files);
 			});
 			
+			me.desc.find(".dlg-btn-edit").click(function() {
+				me.editable.show();
+				me.desccontent.hide();
+				me.descbuttons.show();
+				me.editable.html(me.descbody.html().replace(/(<[^>]*>)/g, function(match, p1, offset, str) {
+					return p1 == "<br>" ? "\n" : "";
+				}).replace(new RegExp("\n", "g"), "<br>"));
+			});
+			
+			me.descbuttons.find(".btn-cancel").click(function() {
+				me.editable.hide();
+				me.desccontent.show();
+				me.descbuttons.hide();
+			});
+			
+			me.descbuttons.find(".btn-post").click(function() {
+				me.update(["desc"], function(res) {
+					if(res) {
+						me.editable.hide();
+						me.descbody.html(res.description);
+						me.desccontent.show();
+						me.descbuttons.hide();
+						if (me.opts.onEventEdited) {
+							me.opts.onEventEdited(res);
+						}
+					}
+				});
+			});
+			
 			me.btnPost.click(function() {
-				if (!me.editable.html().trim() && !me.photo.attr("key")) {
-					return;
-				}
-				
-				var people = [];
-				var users = me.people.find(".user");
-				users.each(function() {
-					people.push($(this).attr("key"));
-				});
-				
-				var selected_tags = [];
-				var tags = me.tags.find(".tag");
-				tags.each(function() {
-					selected_tags.push($(this).attr("key"));
-				});
-				
-				var data = { desc: me.editable.html(), 
-							pid:me.photo.attr("key"), 
-							event_time:me.datetime.format(core.DATETIME_FORMAT),
-							people:people,
-							tags:selected_tags };
-				if (me.loc) {
-					data.loc = me.loc;
-				}
-				core.api("/event", "POST", data, function(res) {
+				me.update(["desc", "photo", "event_time", "people", "tags", "loc"], function(res) {
 					if(res) {
 						me.dismiss();
 						if (me.opts.onEventAdded) {
@@ -1006,9 +1016,65 @@
 			});
 		}
 		
+		DialogEvent.prototype.update = function(fields, cb) {
+			var me = this;
+			if (!me.editable.html().trim() && !me.photo.attr("key")) {
+				return;
+			}
+			
+			var data = {};
+			for (var i in fields) {
+				var f = fields[i];
+				switch(f) {
+				case 'desc':
+					var desc = me.editable.html().trim().replace(/<div>/g, "")
+												.replace(/(<br>|<\/div>)/g, "\n")
+												.replace(/&amp;/g, "&")
+												.replace(/&nbsp;/g, " ")
+												.replace(/&lt;/g, "<")
+												.replace(/&gt;/g, ">");
+					data['desc'] = desc;
+					break;
+				case 'photo':
+					data['pid'] = me.photo.attr("key");
+					break;
+				case 'event_time':
+					data['event_time'] = me.datetime.format(core.DATETIME_FORMAT);
+					break;
+				case 'people':
+					var people = [];
+					var users = me.people.find(".user");
+					users.each(function() {
+						people.push($(this).attr("key"));
+					});
+					data['people'] = people;
+					break;
+				case 'tags':
+					var selected_tags = [];
+					var tags = me.tags.find(".tag");
+					tags.each(function() {
+						selected_tags.push($(this).attr("key"));
+					});
+					data['tags'] = selected_tags;
+				case 'loc':
+					if (me.loc) {
+						data.loc = me.loc;
+					}
+					break;
+				}
+			}
+			
+			core.api("/event" + (("/" + me.key) || ""), "POST", data, function(res) {
+				if(res) {
+					if (cb) {
+						cb(res);
+					}
+				}
+			});
+		};
+		
 		DialogEvent.prototype.reset = function() {
 			var me = this;
-			me.desc.hide();
 			me.descbody.html("");
 			me.photo.hide();
 			me.place.hide();
@@ -1019,20 +1085,25 @@
 			me.loading.hide();
 		};
 		
-		DialogEvent.prototype.setMode = function(mode) {
+		DialogEvent.prototype.setMode = function(key) {
 			var me = this;
-			if (mode == 'new') {
+			if (key == 'new') {
+				me.key = null;
 				me.editable.html("");
 				me.editable.show();
+				me.descbuttons.hide();
+				me.desccontent.hide();
 				me.reset();
 				me.btnPost.show();
 				me.loc = null;
 			} else {
+				me.key = key;
 				me.editable.hide();
 				me.reset();
-				me.desc.show();
+				me.desccontent.show();
+				me.descbuttons.hide();
 				me.btnPost.hide();
-				core.api("/event/" + mode, "GET", function(res) {
+				core.api("/event/" + key, "GET", function(res) {
 					if (res) {
 						me.descbody.html(res.description);
 						me.setDate(strptime(res.event_time, core.timezone));
@@ -1413,10 +1484,17 @@
 						<img />
 						<div class="progressbar"><div class="progress"></div></div>
 					</div>
-					<div class="editable" contenteditable="plaintext-only">
-					</div>
 					<div class="dlg-event-desc">
-						<span class="dlg-event-desc-body"></span><span class="dlg-btn-edit">Edit</span>
+						<div class="editable" contenteditable="plaintext-only">
+						</div>
+						<div class="buttons-desc">
+							<button class="btn-cancel">Cancel</button>
+							<button class="btn-post">Save</button>
+						</div>
+						<div class="desc-content">
+							<span class="dlg-event-desc-body"></span>
+							<span class="dlg-btn-edit">Edit</span>
+						</div>
 					</div>
 					<div class="dlg-event-people">
 					</div>
