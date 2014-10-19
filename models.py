@@ -606,6 +606,9 @@ class Event(BaseModel):
     created_time = ndb.DateTimeProperty(auto_now_add=True)
     updated_time = ndb.DateTimeProperty(auto_now=True)
     
+    def is_owner(self, user_id):
+        return self.key.parent().integer_id() == user_id
+    
     @classmethod        
     def parse_key(cls, urlsafe, parent=None):
         try:

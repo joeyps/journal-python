@@ -323,7 +323,7 @@
 		
 		.dlg .dlg-event-photo img {
 			display:inline;
-			max-height:100%; 
+			max-height:400px; 
 			max-width:100%;
 		}
 		
@@ -920,6 +920,9 @@
 			core.events.bind(me.tagPicker, "change", function() {
 				var tags = me.tagPicker.getSelected();
 				me.setTags(tags);
+				if (me.editing) {
+					me.update(['tags']);
+				}
 			});
 			
 			me.view.click(function() {
@@ -1003,6 +1006,9 @@
 						if (res.location) {
 							me.setLocation(res.location);
 						}
+						if (me.editing) {
+							me.update(['event_time', 'photo', 'loc']);
+						}
 					}
 				},
 				done:function() {
@@ -1018,10 +1024,7 @@
 		
 		DialogEvent.prototype.update = function(fields, cb) {
 			var me = this;
-			if (!me.editable.html().trim() && !me.photo.attr("key")) {
-				return;
-			}
-			
+
 			var data = {};
 			for (var i in fields) {
 				var f = fields[i];
@@ -1075,6 +1078,8 @@
 		
 		DialogEvent.prototype.reset = function() {
 			var me = this;
+			me.key = null;
+			me.editing = false;
 			me.descbody.html("");
 			me.photo.hide();
 			me.place.hide();
@@ -1087,19 +1092,17 @@
 		
 		DialogEvent.prototype.setMode = function(key) {
 			var me = this;
+			me.reset();
 			if (key == 'new') {
-				me.key = null;
 				me.editable.html("");
 				me.editable.show();
 				me.descbuttons.hide();
 				me.desccontent.hide();
-				me.reset();
 				me.btnPost.show();
 				me.loc = null;
 			} else {
 				me.key = key;
 				me.editable.hide();
-				me.reset();
 				me.desccontent.show();
 				me.descbuttons.hide();
 				me.btnPost.hide();
@@ -1114,6 +1117,7 @@
 						}
 						me.setPeople(res.people);
 						me.setTags(res.tags);
+						me.editing = true;
 					}
 					me.loading.hide();
 				});
@@ -1156,6 +1160,10 @@
 			} else {
 				me.btnPeople.removeClass("active");
 				me.people.html("");
+			}
+			
+			if (me.editing) {
+				me.update(['people']);
 			}
 		};
 		

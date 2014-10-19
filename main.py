@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import httplib
 import json
 import webapp2
 from webapp2_extras import sessions
@@ -181,6 +182,10 @@ class EventHandler(BaseHandler):
             e = None
             if id:
                 e = Event.from_id(id)
+                if not e.is_owner(user['id']):
+                    self.error(httplib.FORBIDDEN)
+                    self.send_json(False)
+                    return
             else:
                 e = Event(parent=owner)
             if 'desc' in data:
