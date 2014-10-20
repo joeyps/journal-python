@@ -9,8 +9,10 @@
 		<link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700' rel='stylesheet' type='text/css'>
 		<link href='/static/css/default.css' rel='stylesheet' type='text/css'>
 		<style type="text/css">
+		body {
+			background:#272831;
+		}
 		#main { 
-			max-width:700px; 
 			min-width:350px;
 			margin: 0 auto;
 		}
@@ -1067,7 +1069,7 @@
 				}
 			}
 			
-			core.api("/event" + (("/" + me.key) || ""), "POST", data, function(res) {
+			core.api("/event" + ("/" + (me.key || "")), "POST", data, function(res) {
 				if(res) {
 					if (cb) {
 						cb(res);

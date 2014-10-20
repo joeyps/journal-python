@@ -1,47 +1,52 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<title>{% block title %}Journal{% endblock %}</title>
+		<title>{% block title %}Those Days{% endblock %}</title>
 		<meta name="description" content=""> 
 		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-		<meta http-equiv="pragma" content="no-cache" />
 		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 		<link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700' rel='stylesheet' type='text/css'>
 		<style type="text/css">
 			@font-face {
-			    font-family: JennaSue;
-			    src: url(/static/fonts/jenna_sue.ttf);
+			    font-family: "bookman bold";
+			    src: url(/static/fonts/bookman-old-style-bold.ttf);
 			    font-weight:400;
+			}
+			
+			body, html {
+				width:100%;
+				height:100%;
 			}
 		
 			body {
-				font-family:"Open Sans",proxima_nova,"Helvetica Neue",Helvetica,Arial,sans-serif;
+				font-family:"Helvetica Neue", Helvetica,"Open Sans",proxima_nova,Arial,sans-serif;
 				font-size:14px;
 				margin:0;
-			}
-			
-			#welcome {
-				background: transparent url("/static/images/cover.jpg") center top no-repeat;
+				background: #2c4762 url("/static/images/cover2.jpg") center top no-repeat;
 				background-size: cover;
 			}
 
 			#welcome-text {
-				min-height: 550px;
-				padding-top: 90px;
+				width: 100%;
 				text-align: center;
-				margin: 0 auto;
-				max-width: 720px;
 				min-width: 296px;
 				color:white;
+				position: relative;
+				top: 40%;
+				-webkit-transform: translateY(-50%);
+				-ms-transform: translateY(-50%);
+				transform: translateY(-50%);
 			}
 			
 			#welcome-text h1 {
 				font-size:5em;
-				font-family:"JennaSue";
+				margin:10px 0px;
+				font-weight:100;
+				font-family:"bookman bold";
 			}
 			
 			#welcome-text h2 {
-				font-size:2em;
+				margin-bottom: 50px;
 			}
 			
 			#welcome-text h1, h2 {
@@ -49,24 +54,25 @@
 			}
 			
 			.btn-signin {
-				display: inline-block;
+				max-width:250px;
 				background: #dd4b39;
 				color: white;
 				border-radius: 5px;
 				white-space: nowrap;
 				cursor:pointer;
+				margin:0px auto 5px auto;
+				text-align: left;
 			}
 			
 			.btn-fb {
 				background: #4c66a4 !important;
 			}
 			
-			.btn-fb span.icon{
-				background: url('/static/images/fb_32.png') transparent 5px 50% no-repeat !important;
+			.btn-fb svg {
+				margin-left: 3px;
 			}
 			
 			.btn-signin span.icon {
-				background: url('/static/images/btn_g+_32.png') transparent 5px 50% no-repeat;
 				display: inline-block;
 				vertical-align: middle;
 				width: 35px;
@@ -76,6 +82,13 @@
 			
 			.btn-fb span.icon{
 				border-right: #364c7c 1px solid;
+			}
+			
+			.btn-gp svg {
+				width: 20px;
+				height: 20px;
+				margin-left: 10px;
+				margin-top: 7px;
 			}
 			
 			.btn-signin span.buttonText {
@@ -175,25 +188,29 @@
 		{% endblock %}
     </head>
     <body>
-		<noscript>
-			Javascript required
-		</noscript>
-
-	    <div id="content">
-			<div id="welcome">
-				<div id="welcome-text">
-					<div>
-						<h1>Those Days</h1>
-						<h2>Just for personal.</h2>
-					</div>
-					<div>
-						<div id="btnFbSignIn" class="btn-signin btn-fb" data-gapiattached="true">
-							<span class="icon"></span>
-							<span class="buttonText">Sign In with Facebook</span>
-					    </div>
-					</div>
+		<div id="welcome-text">
+			<div>
+				<h1>those days</h1>
+				<h2>Just for personal.</h2>
+			</div>
+			<div>
+				<div>
+					<div id="btnFbSignIn" class="btn-signin btn-fb" data-gapiattached="true">
+						<span class="icon">
+							<svg fill="#fff" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><title>facebook</title><g><path d="M12.66 8.359c.045-.452.229-.929.563-1.427.331-.497.869-.943 1.612-1.337.745-.397 1.818-.595 3.218-.595h3.947v3.965h-2.889c-.287 0-.552.099-.792.295-.239.195-.362.38-.362.553v2.468h4.043c-.043.483-.09.952-.141 1.404l-.162 1.197c-.064.406-.129.781-.192 1.127h-3.578v10.991h-5.328v-10.991h-2.598v-3.729h2.598v-3.035c0-.136.019-.432.062-.886zm0 0"/></g></svg>
+						</span>
+						<span class="buttonText">Sign In with Facebook</span>
+				    </div>
+				</div>
+				<div>
+					<div id="btnGpSignIn" class="btn-signin btn-gp" data-gapiattached="true">
+						<span class="icon">
+							<svg fill="#fff" version="1.1" xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" viewBox="0 0 14 14" class="u7"><g><path d="m7.228,7.958l-.661-.514c-.201-.166-.476-.386-.476-.79 0-.405 .275-.663 .513-.901 .769-.606 1.538-1.25 1.538-2.611 0-1.256-.632-1.862-.94-2.24h.899l.899-.902h-3.622c-.989,0-2.235,.147-3.278,1.01-.788,.68-1.172,1.618-1.172,2.464 0,1.433 1.098,2.885 3.04,2.885 .183,0 .384-.018 .586-.036-.092,.22-.183,.405-.183,.717 0,.569 .048,.809 .305,1.14-.824,.055-2.119,.12-3.254,.819-1.082,.644-1.411,1.717-1.411,2.379 0,1.361 1.281,2.629 3.938,2.629 3.149,0 4.816-1.747 4.816-3.474 .001-1.269-.731-1.894-1.537-2.575zm-4.689-5.384c0-.479 .091-.975 .402-1.361 .293-.368 .806-.607 1.283-.607 1.519,0 2.306,2.06 2.306,3.383 0,.33-.037,.918-.457,1.341-.294,.295-.786,.515-1.244,.515-1.575,0-2.29-2.041-2.29-3.271zm2.308,10.66c-1.96,0-3.224-.938-3.224-2.243s1.063-1.691 1.466-1.839c.77-.256 1.788-.348 1.788-.348s.456,.026 .665,.019c1.115,.546 1.997,1.487 1.997,2.428 0,1.138-.935,1.983-2.692,1.983z"></path><polygon points="14,5.992 11.991,5.992 11.991,4.001 10.991,4.001 10.991,5.992 9,5.992 9,6.992 10.991,6.992 10.991,9 11.991,9 11.991,6.992 14,6.992 "></polygon></g></svg>
+						</span>
+						<span class="buttonText">Sign In with Google</span>
+				    </div>
 				</div>
 			</div>
-	    </div>
+		</div>
     </body> 
 </html>
