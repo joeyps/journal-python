@@ -102,7 +102,7 @@ class BaseHandler(webapp2.RequestHandler):
                     profile_picture=user.profile_picture,
                     id=user.key.integer_id(),
                     oauth_uid=user.oauth_uid,
-                    access_token=user.access_token,
+                    #access_token=user.access_token,
                     timezone=user.timezone
                 )
                 return self.session.get("user")
@@ -112,6 +112,7 @@ class BaseHandler(webapp2.RequestHandler):
     def template_values(self):
         values = {
             'user' : self.current_user,
+            'json_user' : json.dumps(self.current_user),
             'facebook_app_id':FACEBOOK_APP_ID
         }
         return values

@@ -10,7 +10,7 @@
 		<link href='/static/css/default.css' rel='stylesheet' type='text/css'>
 		<style type="text/css">
 		body {
-			background:#272831;
+			background:#343640;
 		}
 		#main { 
 			min-width:350px;
@@ -28,7 +28,8 @@
 		.buttons-main .input-text {
 			margin-right: 165px;
 			max-width: 400px;
-			padding-left:30px;
+			padding-left:40px;
+			border-radius: 15px;
 		}
 		
 		.buttons-main .input-text input[type=text] {
@@ -42,7 +43,7 @@
 			height: 20px;
 			position: absolute;
 			top: 9px;
-			left: 7px;
+			left: 12px;
 			fill: #dc2528;
 		}
 		
@@ -53,8 +54,9 @@
 		}
 		
 		#events {
-			margin-top:40px;
 			text-align:left;
+			margin: 40px auto;
+			position: relative;
 		}
 		
 		.events:after {
@@ -81,15 +83,77 @@
 			font-size: 24px;
 		}
 		
+		.box {
+			position:absolute;
+			border-radius:6px;
+			width:255px;
+			overflow:hidden;
+		}
+		
+		.box.user .portrait {
+			background-color: rgba(0, 0, 0, 0.5);
+			padding: 53px 63px 30px;
+		}
+		
+		.box.user .portrait img {
+			width:128px;
+			height:128px;
+		}
+		
+		.box.user .profile {
+			background-color: rgba(0, 0, 0, 0.5);
+			padding:10px 10px;
+			color:#fff;
+			text-align:center;
+		}
+		
+		.box.user .profile h1 {
+			font-size: 18px;
+			margin: 0 0 24px;
+		}
+		
+		.box.user .menu-item {
+			margin-top:1px;
+			background-color: rgba(0, 0, 0, 0.5);
+		}
+		
+		.box.user .menu-item:hover {
+			background-color: #f64c3f;
+		}
+		
+		.box.user .menu-item a {
+			display: block;
+			vertical-align: middle;
+			line-height: 48px;
+			padding-left: 50px;
+			color:#fff;
+		}
+		
+		.box.user .menu-item a:hover {
+			text-decoration: none;
+		}
+		
 		#events .event {
-			position:relative;
-			background-color:#ccc;
+			/*background-color:#ccc;
 			background-size:cover;
 			float:left;
 			width:170px;
 			height:170px;
 			margin-right:3px;
-			margin-bottom:3px;
+			margin-bottom:3px;*/
+		}
+		
+		#events .event .photo {
+			position:relative;
+		}
+		
+		#events .event .photo img {
+			display:block;
+		}
+		
+		#events .event .desc {
+			background-color:#fff;
+			padding:15px 15px;
 		}
 		
 		#events .event .date,
@@ -476,6 +540,70 @@
 			stroke: #449c2f;
 		}
 		
+		.droparea {
+			display:table;
+			background-color: #f64c3f;
+			width: 300px;
+			height: 300px;
+			border-radius: 50%;
+			/* display: initial; */
+			margin-left:-150px;
+			margin-top:-150px;
+			position: absolute;
+			top:50%;
+			left:50%;
+		}
+		
+		.droparea .droparea-info {
+			display:table-cell;
+			vertical-align: middle;
+			text-align: center;
+			color:#fff;
+			font-size:18px;
+			font-weight:bold;
+		}
+		
+		.droparea.play {
+			-webkit-animation: bounce 0.7s infinite; /* Chrome, Safari, Opera */
+			animation: bounce 0.7s infinite;
+			-webkit-animation-timing-function: linear;
+		}
+		
+		/* Chrome, Safari, Opera */
+		@-webkit-keyframes bounce {
+		    0% {
+				width: 300px;
+				height: 300px;
+			}
+		    50% {
+				width: 330px;
+				height: 330px;
+				margin-left:-165px;
+				margin-top:-165px;
+			}
+		    100% {
+				width: 300px;
+				height: 300px;
+			}
+		}
+
+		@keyframes bounce {
+		    0% {
+				width: 300px;
+				height: 300px;
+			}
+		    50% {
+				width: 330px;
+				height: 330px;
+				margin-left:-165px;
+				margin-top:-165px;
+			}
+		    100% {
+				width: 300px;
+				height: 300px;
+			}
+		}
+		
 		.autocomplete-suggestions { border: 1px solid #999; background: #FFF; overflow: auto; }
 		.autocomplete-suggestion { padding: 3px 5px; white-space: nowrap; overflow: hidden; }
 		.autocomplete-suggestion img { width:40px; height:40px; float:left; border-radius:2px;}
@@ -494,7 +622,7 @@
 		<script type="text/javascript" src="/static/js/jquery.autocomplete.js"></script>
 		<script type="text/javascript" src="/static/js/core.js"></script>
 		<script type="text/javascript">
-		
+		core.user = {{ json_user }};
 		core.Map = {
 			createMarker:function(opts) {
 				var marker = new google.maps.Marker(opts);
@@ -774,11 +902,69 @@
 			return eventView;
 		};
 		
+		Events.prototype.inflateEvent2 = function(e, width) {
+			var date = strptime(e.event_time, core.timezone);
+			var eventView = $("<div class='box event' time='" + date.format(core.DATETIME_FORMAT) + "'></div>");
+			eventView.attr("key", e.id);
+			var photoView = $("<div class='photo'></div>").appendTo(eventView);
+			if (e.photo) {
+				var img = $("<img src='" + e.photo.thumb_url + "350' />").appendTo(photoView);
+				var h = (1.0 * e.photo.height / e.photo.width) * width;
+				img.css( { width: width + "px", height: h + "px"} );
+			}
+			photoView.append("<div class='date'><div class='month'>" + date.format("mmm").toUpperCase() + "</div>" + 
+							"<div class='day'>" + date.format("d") + "</div></div>")
+			
+			if (e.description) {
+				eventView.append("<div class='desc'>" + e.description + "</div>");
+			}
+				
+			return eventView;
+		};
+		
+		Events.prototype.relayout = function() {
+			var me = this;
+			if (!me.events)
+				return;
+			var hasUserProfile = true;
+			var windowWidth = me.view.parent().width();
+			var gapWidth = 30;
+			var gapHeight = 30;
+			var eventWidth = 255;
+			var spanX = parseInt(windowWidth / (eventWidth + gapWidth), 10);
+			var lastY = [];
+			for (var i = 0; i < spanX; i++)
+				lastY.push(0);
+			me.view.css({ width:(eventWidth*spanX + gapWidth*(spanX - 1)) + "px"});
+			
+			if (hasUserProfile) {
+				var userView = me.view.find(".box.user");
+				var user = core.user;
+				if (userView.length == 0) {
+					userView = $("<div class='box user'>" + 
+								"<div class='portrait'><img src='" + user.profile_picture + "' /></div></div>").appendTo(me.view);
+					userView.append("<div class='profile'><h1>" + user.name + "</h1></div>");
+					userView.append("<div class='menu-item'><a href='/logout'>SIGN OUT</a></div>");
+				}
+				userView.css( {top:"0px", left:"0px" } );
+				lastY[0] = userView.height() + gapHeight;
+			}
+			
+			me.events.each(function(i) {
+				if (hasUserProfile) i += 1;
+				var cellX = i % spanX;
+				var e = $(this);
+				e.css({ top:lastY[cellX] + "px", left:(cellX * (eventWidth + gapWidth)) + "px" });
+				lastY[cellX] = lastY[cellX] + e.height() + gapHeight;
+			});
+		};
+		
 		Events.prototype.notifyDataChanged = function() {
 			var me = this;
-			var events = me.view.find(".event");
-			if (events.length > 0) {
+			me.events = me.view.find(".event");
+			if (me.events.length > 0) {
 				me.empty.hide();
+				me.relayout();
 			} else {
 				me.empty.show();
 			}
@@ -831,7 +1017,7 @@
 							if (!year || date.getFullYear() != year.getYear()) {
 								year = me.getYear(date.getFullYear());
 							}
-							var eventView = me.inflateEvent(e).appendTo(year.getEvents());
+							var eventView = me.inflateEvent2(e, 255).appendTo(year.getEvents());
 						}
 					} 
 					me.notifyDataChanged();
@@ -842,7 +1028,7 @@
 		
 		function Year(p, year) {
 			var view = $("<div class='year' year='" + year + "'></div>");
-			view.append("<div class='header'><span class='year-num'>" + year + "</span></div>");
+			//view.append("<div class='header'><span class='year-num'>" + year + "</span></div>");
 			view.append("<div class='events'></div>");
 			if (new Date().getFullYear() == year) {
 				view.find(".header").hide();
@@ -934,17 +1120,23 @@
 			me.view.find(".dlg-event-body").click(function(e) {
 				e.stopPropagation();
 			})
-			.on('dragenter', function() {
+			.on('dragenter', function(e) {
 				me.photo.show();
+				e.stopPropagation();
+				e.preventDefault();
 			})
-			.on('dragover', function() {
+			.on('dragover', function(e) {
+				e.stopPropagation();
+				e.preventDefault();
 			})
-			.on('dragleave', function() {
+			.on('dragleave', function(e) {
+				e.stopPropagation();
+				e.preventDefault();
 			})
 			.on('drop', function(e) {
+				e.stopPropagation();
 				e.preventDefault();
-				var files = e.target.files || e.originalEvent.dataTransfer.files;
-				me.uploadPhotoFiles(files);
+				me.handleDropFile(e);
 			});
 			
 			me.desc.find(".dlg-btn-edit").click(function() {
@@ -1024,6 +1216,11 @@
 			});
 		}
 		
+		DialogEvent.prototype.handleDropFile = function(e) {
+			var files = e.target.files || e.originalEvent.dataTransfer.files;
+			this.uploadPhotoFiles(files);
+		};
+		
 		DialogEvent.prototype.update = function(fields, cb) {
 			var me = this;
 
@@ -1101,6 +1298,7 @@
 				me.descbuttons.hide();
 				me.desccontent.hide();
 				me.btnPost.show();
+				me.setDate(new Date());
 				me.loc = null;
 			} else {
 				me.key = key;
@@ -1200,6 +1398,13 @@
 		DialogEvent.prototype.uploadPhotoFiles = function(files) {
 			var me = this;
 			me.um.start(files, "/_api/photo");
+		};
+		
+		DialogEvent.prototype.showFromDrop = function(e) {
+			var me = this;
+			me.setMode('new');
+			me.show();
+			me.handleDropFile(e);
 		};
 		
 		DialogEvent.prototype.show = function() {
@@ -1312,12 +1517,52 @@
 				e.stopPropagation();
 			});
 			
+			var dlgDrop = $("#dlg_drop");
+			var droparea = dlgDrop.find(".droparea");
+			droparea.on('dragenter', function(e) {
+				e.stopPropagation();
+				e.preventDefault();
+				droparea.addClass("play");
+			}).on('dragover', function(e) {
+				e.stopPropagation();
+				e.preventDefault();
+			}).on('dragleave', function(e) {
+				e.stopPropagation();
+				e.preventDefault();
+				droparea.removeClass("play");
+			}).on('drop', function(e) {
+				e.stopPropagation();
+				e.preventDefault();
+				dlgDrop.hide();
+				droparea.removeClass("play");
+				dlgEvent.showFromDrop(e);
+			});
+			
+			dlgDrop.on('dragenter', function(e) {
+				e.stopPropagation();
+				e.preventDefault();
+			}).on('dragover', function(e) {
+				e.stopPropagation();
+				e.preventDefault();
+			}).on('dragleave', function(e) {
+				e.stopPropagation();
+				e.preventDefault();
+				dlgDrop.hide();
+				droparea.removeClass("play");
+			}).on('drop', function(e) {
+				e.stopPropagation();
+				e.preventDefault();
+				dlgDrop.hide();
+				droparea.removeClass("play");
+			});
+			
 			$(document).click(function() {
 				$(".menu").hide();
 			})
 			.on('dragenter', function(e) {
 				e.stopPropagation();
 				e.preventDefault();
+				dlgDrop.show();
 			})
 			.on('dragover', function(e) {
 				e.stopPropagation();
@@ -1402,6 +1647,15 @@
 					dlgEvent.show();
 				}
 			});
+			
+			var alarmRelayout = new Alarm(function() {
+				events.relayout();
+			});
+			$(window).resize(function() {
+				alarmRelayout.cancel();
+				alarmRelayout.start(400);
+			});
+			
 			dlgEvent = new DialogEvent($("#dlg_event"), {
 				onEventAdded:function(event) {
 					events.addEvent(event);
@@ -1411,7 +1665,6 @@
 			
 			$(".btn-new").click(function() {
 				dlgEvent.setMode('new');
-				dlgEvent.setDate(new Date());
 				dlgEvent.show();
 			});
 			
@@ -1483,6 +1736,11 @@
 			<div id="loading" style="display:none;"><img src="/static/images/loading.gif" /></div>
 			<div id="dlg_map" class="dlg" style="display:none;">
 				<div id="map_canvas"></div>
+			</div>
+			<div id="dlg_drop" class="dlg" style="display:none;">
+				<div class="droparea">
+					<span class="droparea-info">Drop here</span>
+				</div>
 			</div>
 			<div id="dlg_event" class="dlg" style="display:none;">
 				<div class="dlg-event-body">
