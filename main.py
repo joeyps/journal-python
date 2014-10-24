@@ -202,6 +202,9 @@ class EventHandler(BaseHandler):
             if 'loc' in data:
                 loc = data['loc']
                 e.location = ndb.GeoPt(loc['lat'], loc['lng'])
+            if 'place' in data:
+                place = data['place']
+                e.place = place
             if 'people' in data:
                 #TODO check if people who has tagged is friend, and no repeated
                 e.people = [User.parse_key(user_key) for user_key in data['people']]

@@ -602,6 +602,7 @@ class Event(BaseModel):
     tags = ndb.StringProperty(repeated=True)
     event_time = ndb.DateTimeProperty()
     location = ndb.GeoPtProperty()
+    place = ndb.JsonProperty()
     who_can_see = ndb.KeyProperty(kind=User, repeated=True)
     created_time = ndb.DateTimeProperty(auto_now_add=True)
     updated_time = ndb.DateTimeProperty(auto_now=True)
@@ -632,7 +633,8 @@ class Event(BaseModel):
             event_time=self.event_time.strftime(DATETIME_FORMAT),
             people=[user.integer_id() for user in self.people] if self.people else [],
             tags=(self.tags or []),
-            location= { 'lat':self.location.lat, 'lng':self.location.lon } if self.location else None
+            location= { 'lat':self.location.lat, 'lng':self.location.lon } if self.location else None,
+            place=self.place
                 )
         return d
 
