@@ -634,7 +634,10 @@ class Event(BaseModel):
             people=[user.integer_id() for user in self.people] if self.people else [],
             tags=(self.tags or []),
             location= { 'lat':self.location.lat, 'lng':self.location.lon } if self.location else None,
-            place=self.place
+            place=self.place,
+            owner={
+                'id':self.key.parent().integer_id()
+            }
                 )
         return d
 

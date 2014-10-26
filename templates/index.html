@@ -85,8 +85,11 @@
 		
 		.box {
 			position:absolute;
-			border-radius:6px;
 			width:255px;
+		}
+		
+		.box.user {
+			border-radius:6px;
 			overflow:hidden;
 		}
 		
@@ -153,7 +156,31 @@
 		
 		#events .event .desc {
 			background-color:#fff;
-			padding:15px 15px;
+			padding:25px 15px;
+			position:relative;
+		}
+		
+		#events .event .desc .owner {
+			border: 2px solid #fff;
+			border-radius: 50%;
+			width: 48px;
+			height: 48px;
+			margin-bottom: 15px;
+			margin-left: 15px;
+		}
+		
+		#events .event .desc .owner.owner-float {
+			position:absolute;
+			right: 10px;
+			top: -30px;
+			margin-bottom: 0px;
+			margin-left: 0px;
+		}
+		
+		#events .event .up-corner {
+			border-top-left-radius:6px;
+			border-top-right-radius:6px;
+			overflow:hidden;
 		}
 		
 		#events .event .date,
@@ -169,6 +196,66 @@
 		.div-photo .date .day {
 			font-size:24px;
 			text-align:center;
+		}
+		
+		#events .event .place {
+			background-color:#fff;
+		}
+		
+		#events .event .place>span {
+			display:inline-block;
+			vertical-align:middle;
+		}
+		
+		#events .event .tags {
+			position: absolute;
+			right: 0px;
+			top: 28px;
+		}
+		
+		#events .event .tags>span {
+			float:right;
+			display:block;
+			width:4px;
+			height:26px;
+			margin-right:-4px;
+			background-color: #f64c3f;
+		}
+		
+		#events .event .tags>span:hover ~ .labels {
+			display:block;
+		}
+		
+		#events .event .labels {
+			display:none;
+		}
+		
+		#events .event .labels:hover {
+			display:block;
+		}
+		
+		#events .event .tags .label {
+			display:inline-block;
+			vertical-align: middle;
+			line-height: 26px;
+			padding:0 10px;
+			background-color: #f64c3f;
+			color:#fff;
+			cursor:pointer;
+		}
+		
+		#events .event .event-footer {
+			background-color: rgba(0, 0, 0, 0.5);
+			border-bottom-left-radius:6px;
+			border-bottom-right-radius:6px;
+			overflow:hidden;
+			color:#fff;
+		}
+		
+		#events .event .event-footer .btn-icon {
+			display:inline-block;
+			line-height:48px;
+			padding:0 10px;
 		}
 		
 		.events-place {
@@ -414,8 +501,11 @@
 			vertical-align:middle;
 		}
 			
-		.dlg .dlg-event-place svg.icon-marker {
+		.dlg .dlg-event-place svg.icon-marker,
+		#events .event svg.icon-marker {
 			fill:red;
+			width:30px;
+			height:30px;
 		}
 		
 		.dlg .dlg-event-people {
@@ -929,18 +1019,15 @@
 					var type = suggestion.type;
 					if (type == 'tag') {
 						var tag = suggestion.data;
-						me.filters.append("<span class='tag active filter' key='" + tag + "' type='tag'>" + tag + "</span>");
-						var w = me.view.width() - me.filters.width() - parseInt(me.view.css("padding-left").replace("px", ""), 10);
-						me.input.css({width:w + "px"});
-						me.input.val("");
+						me.addTag(tag);
+						me.onFilterChanged();
 					} else if (type == 'user') {
 						var user = suggestion.data;
-						me.filters.append("<span class='tag active filter' key='" + user.id
-							 						+ "' type='user'>" + user.name + "</span>");
+						me.addUser(user);
+						me.onFilterChanged();
 					}
 					
 					me.input.val("");
-					me.onFilterChanged();
 			    },
 				onCreateView: function(value, suggestions) {
 					var html = "";
@@ -982,6 +1069,20 @@
 			});
 		}
 		
+		SearchBar.prototype.clearFilters = function() {
+			this.filters.find(".filter").remove();
+		};
+		
+		SearchBar.prototype.addUser = function(user) {
+			this.filters.append("<span class='tag active filter' key='" + user.id
+				 						+ "' type='user'>" + user.name + "</span>");
+			
+		};
+		
+		SearchBar.prototype.addTag = function(tag) {
+			this.filters.append("<span class='tag active filter' key='" + tag + "' type='tag'>" + tag + "</span>");
+		};
+		
 		SearchBar.prototype.getFilters = function() {
 			var me = this;
 			var filters = [];
@@ -989,6 +1090,10 @@
 				filters.push({ type:$(this).attr("type"), key:$(this).attr("key")});
 			});
 			return filters;
+		};
+		
+		SearchBar.prototype.notifyFiltersChanged = function() {
+			this.onFilterChanged();
 		};
 		
 		SearchBar.prototype.onFilterChanged = function() {
@@ -1012,6 +1117,16 @@
 					me.opts.onItemClick($(this).attr("key"));
 				}
 			});
+			
+			me.view.on("click", ".event .label", function(e) {
+				core.events.trigger(me, "click_tag", $(this).attr("key"));
+				e.stopPropagation();
+			});
+			
+			me.view.on("click", ".event .owner", function(e) {
+				core.events.trigger(me, "click_user", $(this).attr("key"));
+				e.stopPropagation();
+			});
 		}
 		
 		Events.prototype.getYear = function(year) {
@@ -1028,7 +1143,7 @@
 			var year = me.getYear(event_time.getFullYear());
 			var eventsContainer = year.getEvents();
 			var events = eventsContainer.find(".event");
-			var view = me.inflateEvent2(e, me.viewWidth);
+			var view = me.inflateEvent2(e);
 			if (events.length == 0) {
 				eventsContainer.append(view);
 				me.notifyDataChanged();
@@ -1050,6 +1165,12 @@
 			return view;
 		};
 		
+		Events.prototype.updateEvent = function(e) {
+			var eventView = this.events.filter(".event[key=" + e.id + "]");
+			eventView.html(this.inflateEvent2(e).html());
+			this.relayout();
+		};
+		
 		Events.prototype.inflateEvent = function(e) {
 			var date = strptime(e.event_time, core.timezone);
 			var eventView = $("<div class='event' time='" + date.format(core.DATETIME_FORMAT) + "'></div>");
@@ -1061,22 +1182,47 @@
 			return eventView;
 		};
 		
-		Events.prototype.inflateEvent2 = function(e, width) {
+		Events.prototype.inflateEvent2 = function(e) {
+			var width = this.viewWidth;
 			var date = strptime(e.event_time, core.timezone);
 			var eventView = $("<div class='box event' time='" + date.format(core.DATETIME_FORMAT) + "'></div>");
 			eventView.attr("key", e.id);
-			var photoView = $("<div class='photo'></div>").appendTo(eventView);
+			var photoView = $("<div class='photo up-corner'></div>").appendTo(eventView);
 			if (e.photo) {
 				var img = $("<img src='" + e.photo.thumb_url + "350' />").appendTo(photoView);
 				var h = (1.0 * e.photo.height / e.photo.width) * width;
 				img.css( { width: width + "px", height: h + "px"} );
+				photoView.append("<div class='date'><div class='month'>" + date.format("mmm").toUpperCase() + "</div>" + 
+								"<div class='day'>" + date.format("d") + "</div></div>")
 			}
-			photoView.append("<div class='date'><div class='month'>" + date.format("mmm").toUpperCase() + "</div>" + 
-							"<div class='day'>" + date.format("d") + "</div></div>")
 			
-			if (e.description) {
-				eventView.append("<div class='desc'>" + e.description + "</div>");
+			var descView = $("<div class='desc'><span>" + (e.description || "")  + "</span></div>").appendTo(eventView);
+			var owner = null;
+			if (e.owner.id != core.user.id && e.photo) {
+				owner = core.Friend.users[e.owner.id];
+				//TODO fetch friends first
+				if (owner)
+					descView.append("<img class='owner owner-float' key='" + e.owner.id + "' src='" + owner.profile_picture + "' />")
+			} else if (!e.photo) {
+				descView.addClass("up-corner");
+				if (e.owner.id != core.user.id)
+					owner = core.Friend.users[e.owner.id];
+				else
+					owner = core.user;
+				descView.prepend("<div><img class='owner' key='" + e.owner.id + "' src='" + owner.profile_picture + "' /></div>")
 			}
+			
+			if (e.place) {
+				eventView.append("<div class='place'><span>" + assets.svg.marker + "</span>" +
+						"<span class='place-name btn-link'>" + e.place.name + "</span></div>");
+			}
+			
+			if (e.tags.length > 0) {
+				eventView.append("<div class='tags'><span></span>" +
+						"<div class='labels'><span class='label' key='" + e.tags[0] + "'>" + e.tags[0] + "</span></div></div>");
+			}
+			
+			eventView.append("<div class='event-footer'><span class='btn-icon'>Share</span></div>");
 				
 			return eventView;
 		};
@@ -1178,7 +1324,7 @@
 							if (!year || date.getFullYear() != year.getYear()) {
 								year = me.getYear(date.getFullYear());
 							}
-							var eventView = me.inflateEvent2(e, me.viewWidth).appendTo(year.getEvents());
+							var eventView = me.inflateEvent2(e).appendTo(year.getEvents());
 						}
 					} 
 					me.notifyDataChanged();
@@ -1445,6 +1591,10 @@
 				if(res) {
 					if (cb) {
 						cb(res);
+					}
+					
+					if (me.key) {
+						core.events.trigger(me, "event_changed", res);
 					}
 				}
 			});
@@ -1933,6 +2083,18 @@
 				}
 			});
 			
+			core.events.bind(events, "click_tag", function(tag) {
+				searchbar.clearFilters();
+				searchbar.addTag(tag);
+				searchbar.notifyFiltersChanged();
+			});
+			
+			core.events.bind(events, "click_user", function(user) {
+				searchbar.clearFilters();
+				searchbar.addUser(user);
+				searchbar.notifyFiltersChanged();
+			});
+			
 			var alarmRelayout = new Alarm(function() {
 				events.relayout();
 			});
@@ -1952,6 +2114,10 @@
 							
 						});
 				}
+			});
+			
+			core.events.bind(dlgEvent, "event_changed", function(event) {
+				events.updateEvent(event);
 			});
 			
 			$(".btn-new").click(function() {

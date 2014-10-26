@@ -358,13 +358,13 @@ class DemoHandler(BaseHandler):
             updated.append(r)
         ndb.put_multi(updated)
         
-        user = User(name="Noah Wu", profile_picture="https://fbcdn-profile-a.akamaihd.net/hprofile-ak-xpa1/v/t1.0-1/c50.0.200.200/p200x200/10306170_10152250910194398_4038395448859091170_n.jpg?oh=aac0612de87d78dacd02d4b3450da342&oe=54B45EE1&__gda__=1421432074_7efe9b9f1718f166cadd91f4abf28be9")
-        user.put()
+        new_user = User(name="Noah Wu", profile_picture="https://fbcdn-profile-a.akamaihd.net/hprofile-ak-xpa1/v/t1.0-1/c50.0.200.200/p200x200/10306170_10152250910194398_4038395448859091170_n.jpg?oh=aac0612de87d78dacd02d4b3450da342&oe=54B45EE1&__gda__=1421432074_7efe9b9f1718f166cadd91f4abf28be9")
+        new_user.put()
         current_user = self.current_user
         if current_user:
             user = User.from_id(self.current_user['id'])
             f = user.get_friends()
-            f.suggestions.append(user.key)
+            f.suggestions.append(new_user.key)
             f.put()
 
 app = webapp2.WSGIApplication([
