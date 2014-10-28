@@ -29,6 +29,7 @@
 			margin-right: 165px;
 			max-width: 400px;
 			padding-left:40px;
+			padding-right:40px;
 			border-radius: 15px;
 		}
 		
@@ -36,6 +37,7 @@
 			width:100%;
 			box-sizing:border-box;
 			font-size: 14px;
+			padding:4px;
 		}
 		
 		.buttons-main .input-text .icon-search {
@@ -47,10 +49,163 @@
 			fill: #dc2528;
 		}
 		
+		.buttons-main .input-text .icon-clear {
+			width: 20px;
+			height: 20px;
+			position: absolute;
+			top: 7px;
+			right: 12px;
+			fill: #ccc;
+			cursor:pointer;
+		}
+		
 		.buttons-right {
 			position:absolute;
 			right:2px;
 			top:2px;
+		}
+		
+		.buttons-right .btn-notice {
+			display: inline-block;
+			height: 28px;
+			width: 28px;
+			text-align: right;
+			padding: 0px 10px;
+		}
+		
+		.buttons-right .btn-notice span {
+			position:relative;
+			top: 3px;
+		}
+		
+		.buttons-right .btn-notice span .count {
+			position: absolute;
+			bottom: 0px;
+			right: -12px;
+			border-radius: 2px;
+			-webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, .7);
+			background-color: #dc0d17;
+			background-image: -webkit-gradient(linear, center top, center bottom, from(#fa3c45), to(#dc0d17));
+			background-image: -webkit-linear-gradient(#fa3c45, #dc0d17);
+			color: #fff;
+			min-height: 13px;
+			padding: 2px 3px;
+			text-shadow: 0 -1px 0 rgba(0, 0, 0, .4);
+			font-size: 12px;
+			display: inline-block;
+		}
+		
+		.buttons-right .btn-notice svg {
+			fill: #fff;
+			width: 18px;
+			height: 18px;
+		}
+		
+		.sidepanel {
+			background-color:#393939;
+			position:fixed;
+			right:-500px;
+			top:0px;
+			bottom:0px;
+			width:30%;
+			min-width:320px;
+			max-width:500px;
+			-webkit-transition: right 0.3s ease-in-out ; /* For Safari 3.1 to 6.0 */
+			transition: right 0.3s ease-in-out ;
+			-webkit-box-shadow: -2px 2px 4px rgba(0,0,0,.15);
+			box-shadow: -2px 2px 4px rgba(0,0,0,.15);
+			
+			overflow-y: scroll;
+		}
+		
+		.sidepanel .header {
+			text-align:right;
+		}
+		
+		.sidepanel .header svg {
+			fill: rgba(255, 255, 255, 0.5);
+			width: 45px;
+			height: 45px;
+		}
+		
+		.sidepanel.open {
+			right:0px;
+		}
+		
+		.notification {
+			
+		}
+		
+		.notification .date {
+			color: rgba(0, 0, 0, 0.3);
+			font-weight: bold;
+			font-size: 20px;
+			padding: 0px 20px 10px;
+		}
+		
+		.notification .loadmore {
+			text-align:center;
+			padding:10px;
+		}
+		
+		.notification .loadmore span {
+			color:#fff;
+			background-color:rgba(0, 0, 0, 0.5);
+			display:inline-block;
+			padding:5px 20px;
+			border-radius:3px;
+			cursor:pointer;
+		}
+		
+		.notification .msg {
+			background-color:rgba(255, 255, 255, 0.9);
+			-webkit-border-radius: 3px;
+			border-radius: 3px;
+			-webkit-box-shadow: 0 1px 2px rgba(0,0,0,.2);
+			box-shadow: 0 1px 2px rgba(0,0,0,.2);
+			-webkit-transition: margin .2s;
+			transition: margin .2s ease-in-out;
+			margin: 0 20px 8px;
+			overflow: hidden;
+			position: relative;
+			
+			padding:20px 20px;
+		}
+		
+		.notification .msg.read {
+			background-color:rgba(255, 255, 255, 0.7);
+		}
+		
+		.notification .msg:after {
+			content:" ";
+			display:block;
+			clear:both;
+		}
+		
+		.notification .msg .time {
+			padding-top:3px;
+		}
+		
+		.notification .msg .sender-profile-picture {
+			float:left;
+			border-radius:50%;
+			width:40px;
+			height:40px;
+		}
+		
+		.notification .msg .content {
+			margin-left:50px;
+		}
+		
+		.notification .loading-f {
+			height: 0px;
+			overflow-y: hidden;
+			transition: height 0.3s ease-in-out;
+		}
+		
+		.notification .loading-f.play {
+			height: 50px;
+			display:block;
 		}
 		
 		#events {
@@ -744,44 +899,44 @@
 		.autocomplete-suggestions strong { font-weight: normal; color: #3399FF; }
 		
 		/* loading animation*/
-		#circleG{
+		.loading {
 			text-align:center;
 		}
 
-		.circleG{
+		.loading .loading-circle {
 			background-color:rgba(255, 255, 255, 0);
 			display:inline-block;
 			height: 24px;
 			margin-left: 8px;
 			width: 24px;
-			-moz-animation-name:bounce_circleG;
+			-moz-animation-name:bounce_circle;
 			-moz-animation-duration:1.9500000000000002s;
 			-moz-animation-iteration-count:infinite;
 			-moz-animation-direction:linear;
 			-moz-border-radius:50%;
-			-webkit-animation-name:bounce_circleG;
+			-webkit-animation-name:bounce_circle;
 			-webkit-animation-duration:1.9500000000000002s;
 			-webkit-animation-iteration-count:infinite;
 			-webkit-animation-direction:linear;
 			-webkit-border-radius:50%;
-			-ms-animation-name:bounce_circleG;
+			-ms-animation-name:bounce_circle;
 			-ms-animation-duration:1.9500000000000002s;
 			-ms-animation-iteration-count:infinite;
 			-ms-animation-direction:linear;
 			-ms-border-radius:50%;
-			-o-animation-name:bounce_circleG;
+			-o-animation-name:bounce_circle;
 			-o-animation-duration:1.9500000000000002s;
 			-o-animation-iteration-count:infinite;
 			-o-animation-direction:linear;
 			-o-border-radius:50%;
-			animation-name:bounce_circleG;
+			animation-name:bounce_circle;
 			animation-duration:1.9500000000000002s;
 			animation-iteration-count:infinite;
 			animation-direction:linear;
 			border-radius:50%;
 		}
 
-		#circleG_1{
+		.loading .loading-circle.loading-circle-1 {
 			-moz-animation-delay:0.39s;
 			-webkit-animation-delay:0.39s;
 			-ms-animation-delay:0.39s;
@@ -789,7 +944,7 @@
 			animation-delay:0.39s;
 		}
 
-		#circleG_2{
+		.loading .loading-circle.loading-circle-2 {
 			-moz-animation-delay:0.9099999999999999s;
 			-webkit-animation-delay:0.9099999999999999s;
 			-ms-animation-delay:0.9099999999999999s;
@@ -797,7 +952,7 @@
 			animation-delay:0.9099999999999999s;
 		}
 
-		#circleG_3{
+		.loading .loading-circle.loading-circle-3 {
 			-moz-animation-delay:1.1700000000000002s;
 			-webkit-animation-delay:1.1700000000000002s;
 			-ms-animation-delay:1.1700000000000002s;
@@ -805,7 +960,7 @@
 			animation-delay:1.1700000000000002s;
 		}
 
-		@-moz-keyframes bounce_circleG{
+		@-moz-keyframes bounce_circle {
 			0%{
 			}
 
@@ -816,7 +971,7 @@
 			}
 		}
 
-		@-webkit-keyframes bounce_circleG{
+		@-webkit-keyframes bounce_circle {
 			0%{
 			}
 
@@ -827,7 +982,7 @@
 			}
 		}
 
-		@-ms-keyframes bounce_circleG{
+		@-ms-keyframes bounce_circle {
 			0%{
 			}
 
@@ -838,7 +993,7 @@
 			}
 		}
 
-		@-o-keyframes bounce_circleG{
+		@-o-keyframes bounce_circle {
 			0%{
 			}
 
@@ -849,7 +1004,7 @@
 			}
 		}
 
-		@keyframes bounce_circleG{
+		@keyframes bounce_circle {
 			0%{
 			}
 
@@ -1009,6 +1164,13 @@
 		function SearchBar(view) {
 			var me = this;
 			me.view = view;
+			me.view.focus(function() {
+				me.input.focus();
+			});
+			me.btnClear = me.view.find(".icon-clear").click(function() {
+				me.clearFilters();
+				me.notifyFiltersChanged();
+			});
 			me.filters = me.view.find(".filters");
 			me.input = me.view.find("#input-search");
 			me.input.autocomplete({
@@ -1100,7 +1262,11 @@
 			var me = this;
 			var w = me.view.width() - me.filters.width() - parseInt(me.view.css("padding-left").replace("px", ""), 10);
 			me.input.css({width:w + "px"});
-			
+			if (me.filters.find(".filter").length == 0) {
+				me.btnClear.hide();
+			} else {
+				me.btnClear.show();
+			}
 			core.events.trigger(this, "filter_change");
 		};
 		
@@ -1331,6 +1497,187 @@
 				}
 				me.loading.hide();
 			});
+		};
+		
+		function NotificationCounter(view) {
+			this.view = view;
+			this.count = this.view.find(".count");
+			this.fetch();
+		}
+		
+		NotificationCounter.prototype.fetch = function() {
+			var me = this;
+			core.api("/me/messages/count", "GET", function(res) {
+				if (res) {
+					core.events.trigger(me, "count_changed", res.count);
+					if (res.count > 0) {
+						me.count.text(res.count);
+						me.count.show();
+					} else {
+						me.count.hide();
+					}
+				}
+			});
+		};
+		
+		function Notifications(view) {
+			var me = this;
+			this.view = view;
+			this.loading = false;
+			this.loadingF = this.view.find(".loading-f");
+			this.loadingB = this.view.find(".loading-b");
+			this.loadmore = this.view.find(".loadmore");
+			this.hasMoreF = true;
+			this.hasMoreB = true;
+			this.btnLoadmore = this.loadmore.find("span").click(function() {
+				me.fetch("b");
+			});
+			this.cursor_f = null;
+			this.cursor_b = null;
+			this.messages = view.find(".messages");
+			this.messages.on("click", ".msg", function() {
+				var msgView = $(this);
+				core.events.trigger(me, "click_msg_event", $(this).attr("target"));
+				core.api("/me/message/" + $(this).attr("key") + "/read", "POST", {}, function() {
+					msgView.addClass("read");
+				});
+			});
+		}
+		
+		Notifications.prototype.mark_as_seen = function(ids) {
+			if (ids.length == 0)
+				return;
+			core.api("/me/messages/seen", "POST", {ids:ids}, function() {
+				
+			});
+		};
+		
+		Notifications.prototype.notifyNewMessage = function() {
+			this.hasMoreF = true;
+		};
+		
+		Notifications.prototype.fetch = function(d) {
+			var me = this;
+			if (me.loading)
+				return;
+
+			if (!d) {
+				if (me.messages.find(".msg").length == 0 && me.hasMoreB) {
+					d = "b";
+				} else if (me.hasMoreF) {
+					d = "f";
+				} else {
+					return;
+				}
+			}
+			
+			if (d == "b") {
+				me.loadingB.show();
+				cursor = this.cursor_b;
+			} else if (d == "f") {
+				me.loadingF.addClass("play");
+				cursor = this.cursor_f;
+			}
+			me.loading = true;
+			me.loadmore.hide();
+			core.api("/me/messages?d=" + d + (cursor ? ("&c=" + cursor) : ""), "GET", function(res) {
+				if (res) {
+					if (d == "b") {
+						me.loadingB.hide();
+						if (res.cursor_f) {
+							me.cursor_f = res.cursor_f;
+						}
+						me.cursor_b = res.cursor_b;
+						me.hasMoreB = res.more;
+					} else if (d == "f") {
+						me.loadingF.removeClass("play");
+						if (res.cursor_f)
+							me.cursor_f = res.cursor_f;
+						me.hasMoreF = res.more;
+					}
+					var msgs = res.msgs;
+					var seen = [];
+					var dayView = null;
+					var now = new Date();
+					for (var i in msgs) {
+						var msg = msgs[i];
+						var created_time = strptime(msg.created_time, core.timezone);
+						var str_created_time = created_time.format(core.DATE_FORMAT);
+						if (dayView == null || dayView.attr("date") != str_created_time) {
+							dayView = me.messages.find(".day[date=" + str_created_time + "]");
+							if (dayView.length == 0) {
+								var label = "";
+								if (now.format(core.DATE_FORMAT) === str_created_time) {
+									label = "Today";
+								} else {
+									label = format_time(created_time);
+								}
+								dayView = $("<div class='day' date='" + str_created_time + "'>" + 
+									"<div class='date'>" + 
+										label + 
+									"</div></div>").appendTo(me.messages);
+							}
+						}
+						var msgView = null;
+						if (msg.msg_type == 2000004 || msg.msg_type == 2000005) {
+							var sender = core.Friend.users[msg.user.id];
+							msgView = $("<div class='msg event' key='" + msg.id + "' target='" + msg.target.id + "'>" + 
+											"<img class='sender-profile-picture' src=" + sender.profile_picture + " />" +
+											"<div class='content'>" +
+											"<div>" + msg.message_str + "</div>" + 
+											"<div class='time txt2nd'>" + created_time.format(core.TIME12_FORMAT) + "</div>" + 
+											"</div>" +
+											"</div>");
+							if (msg.read) {
+								msgView.addClass("read");
+							}
+							if (!msg.seen) {
+								seen.push(msg.id);
+							}
+						}
+						if (msgView) {
+							if (d == "b") {
+								dayView.append(msgView);
+							} else if (d == "f") {
+								dayView.prepend(msgView);
+							}
+						}
+					}
+					if (me.hasMoreB)
+						me.loadmore.show();
+					me.loading = false;
+					me.mark_as_seen(seen);
+					/*new Alarm(function() {
+						me.messages.find(".msg").addClass("new");
+					}).start(100);*/
+				}
+			});
+		};
+		
+		function SidePanel(view) {
+			this.view = view;
+			this.messages = new Notifications(this.view.find(".notification"));
+			var me = this;
+			this.alarm = new Alarm(function() {
+				me.messages.fetch();
+			});
+			var me = this;
+			this.view.find(".btn-notice-close").click(function() {
+				me.close();
+			});
+		}
+		
+		SidePanel.prototype.open = function() {
+			var me = this;
+			this.view.addClass("open");
+			this.alarm.cancel();
+			this.alarm.start(300);
+		};
+		
+		SidePanel.prototype.close = function() {
+			this.view.removeClass("open");
+			this.alarm.cancel();
+			core.events.trigger(this, "close");
 		};
 		
 		function Year(p, year) {
@@ -1952,6 +2299,27 @@
 				e.stopPropagation();
 			});
 			
+			var sidepanel = new SidePanel($(".sidepanel"));
+			var btnNotice = $(".btn-notice");
+			btnNotice.click(function() {
+				sidepanel.open();
+			});
+			
+			core.events.bind(sidepanel.messages, "click_msg_event", function(id) {
+				dlgEvent.setMode(id);
+				dlgEvent.show();
+			});
+			
+			core.events.bind(sidepanel, "close", function() {
+				counter.fetch();
+			});
+			
+			var counter = new NotificationCounter(btnNotice);
+			core.events.bind(counter, "count_changed", function(count) {
+				if (count > 0)
+					sidepanel.messages.notifyNewMessage();
+			});
+			
 			var dlgDrop = $("#dlg_drop");
 			var droparea = dlgDrop.find(".droparea");
 			droparea.on('dragenter', function(e) {
@@ -2175,10 +2543,25 @@
 				<div class="buttons-right">
 					<button class="btn-map">Map</button>
 					<button class="btn-new btn-post">New Event</button>
+					<span class="btn-icon btn-notice">
+						<span>
+							<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="16" height="16" data-icon="list" data-container-transform="translate(0 1)" viewBox="0 0 16 16">
+						  <path d="M0 0v2h2v-2h-2zm4 0v2h12v-2h-12zm-4 4v2h2v-2h-2zm4 0v2h9v-2h-9zm-4 4v2h2v-2h-2zm4 0v2h12v-2h-12zm-4 4v2h2v-2h-2zm4 0v2h11v-2h-11z" transform="translate(0 1)"/>
+							</svg>
+							<span class="count" style="display:none;">
+								99
+							</span>
+						</span>
+					</span>
 				</div>
 				<div id="searchbar" class="input-text">
 					<svg class="icon-search" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Your_Icon" x="0px" y="0px" width="40px" height="40px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
 					<path d="M99.337,89.242L68.052,57.956c4.063-6.057,6.246-13.179,6.246-20.636c0-9.923-3.864-19.252-10.881-26.269  C56.4,4.035,47.072,0.171,37.149,0.171c-9.923,0-19.252,3.864-26.269,10.88C3.864,18.068,0,27.397,0,37.32  s3.864,19.251,10.881,26.268s16.345,10.881,26.269,10.881c7.541,0,14.737-2.234,20.838-6.385l31.255,31.253  c1.055,1.056,2.995,0.826,4.332-0.511l5.252-5.252C100.164,92.237,100.393,90.297,99.337,89.242z M37.149,64.405  c-14.936,0-27.086-12.15-27.086-27.085s12.151-27.086,27.086-27.086c14.935,0,27.085,12.151,27.085,27.086  S52.084,64.405,37.149,64.405z"/>
+					</svg>
+					<svg style="display:none;" class="icon-clear" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.0" id="Layer_1" x="0px" y="0px" viewBox="0 0 24 24" enable-background="new 0 0 24 24" xml:space="preserve" height="100px" width="100px">
+					<g>
+						<path d="M12,2C6.5,2,2,6.5,2,12c0,5.5,4.5,10,10,10s10-4.5,10-10C22,6.5,17.5,2,12,2z M16.9,15.5l-1.4,1.4L12,13.4l-3.5,3.5   l-1.4-1.4l3.5-3.5L7.1,8.5l1.4-1.4l3.5,3.5l3.5-3.5l1.4,1.4L13.4,12L16.9,15.5z"/>
+					</g>
 					</svg>
 					<span class="filters"></span><input id="input-search" type="text" placeholder="tag/people/content" autocomplete="off" />
 					<span class="btn-add">
@@ -2191,161 +2574,199 @@
 				There is no any event yet. <br /><button class="btn-new btn-post">New Event</button>
 			</div>
 			<div id="loading" style="display:none;">
-				<div id="circleG">
-					<div id="circleG_1" class="circleG">
+				<div class="loading">
+					<div class="loading-circle loading-circle-1">
 					</div>
-					<div id="circleG_2" class="circleG">
+					<div class="loading-circle loading-circle-2">
 					</div>
-					<div id="circleG_3" class="circleG">
+					<div class="loading-circle loading-circle-3">
 					</div>
 				</div>
 			</div>
-			<div id="dlg_map" class="dlg" style="display:none;">
-				<div id="map_canvas"></div>
+			
+		</div>
+		<div class="sidepanel">
+			<div class="header">
+				<span class="btn-icon btn-notice-close">
+					<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px"  viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
+					<path d="M51.311,51.315L71.426,31.13c0.361-0.363,0.361-0.951-0.004-1.313c-0.363-0.359-0.951-0.363-1.313,0.004  L50,50L29.891,29.821c-0.363-0.366-0.95-0.363-1.313-0.004c-0.365,0.363-0.365,0.95-0.004,1.313l20.115,20.185L28.574,71.501  c-0.361,0.363-0.361,0.951,0.004,1.313c0.181,0.18,0.417,0.27,0.655,0.27c0.238,0,0.477-0.091,0.658-0.274L50,52.631L70.109,72.81  c0.181,0.183,0.421,0.274,0.658,0.274c0.238,0,0.473-0.091,0.655-0.27c0.365-0.363,0.365-0.95,0.004-1.313L51.311,51.315z"/>
+					</svg>
+				</span>
 			</div>
-			<div id="dlg_drop" class="dlg" style="display:none;">
-				<div class="droparea">
-					<span class="droparea-info">Drop here</span>
+			<div class="notification">
+				<div class="loading-f" style="display:none;">
+					<div class="loading">
+						<div class="loading-circle loading-circle-1">
+						</div>
+						<div class="loading-circle loading-circle-2">
+						</div>
+						<div class="loading-circle loading-circle-3">
+						</div>
+					</div>
+				</div>
+				<div class="messages"></div>
+				<div class="loadmore">
+					<span>
+						See More
+					</span>
+				</div>
+				<div class="loading-b" style="display:none;">
+					<div class="loading">
+						<div class="loading-circle loading-circle-1">
+						</div>
+						<div class="loading-circle loading-circle-2">
+						</div>
+						<div class="loading-circle loading-circle-3">
+						</div>
+					</div>
 				</div>
 			</div>
-			<div id="dlg_event" class="dlg" style="display:none;">
-				<div class="dlg-event-body">
-					<div class="dlg-event-header">
-						<span class="btn-date"></span>
-						<span class="btn-time"></span>
+		</div>
+		<div id="dlg_map" class="dlg" style="display:none;">
+			<div id="map_canvas"></div>
+		</div>
+		<div id="dlg_drop" class="dlg" style="display:none;">
+			<div class="droparea">
+				<span class="droparea-info">Drop here</span>
+			</div>
+		</div>
+		<div id="dlg_event" class="dlg" style="display:none;">
+			<div class="dlg-event-body">
+				<div class="dlg-event-header">
+					<span class="btn-date"></span>
+					<span class="btn-time"></span>
+				</div>
+				<div class="dlg-event-photo">
+					<img />
+					<div class="progressbar"><div class="progress"></div></div>
+				</div>
+				<div class="dlg-event-desc">
+					<div class="editable" contenteditable="plaintext-only">
 					</div>
-					<div class="dlg-event-photo">
-						<img />
-						<div class="progressbar"><div class="progress"></div></div>
+					<div class="buttons-desc">
+						<button class="btn-cancel">Cancel</button>
+						<button class="btn-post">Save</button>
 					</div>
-					<div class="dlg-event-desc">
-						<div class="editable" contenteditable="plaintext-only">
-						</div>
-						<div class="buttons-desc">
-							<button class="btn-cancel">Cancel</button>
-							<button class="btn-post">Save</button>
-						</div>
-						<div class="desc-content">
-							<span class="dlg-event-desc-body"></span>
-							<span class="dlg-btn-edit">Edit</span>
-						</div>
+					<div class="desc-content">
+						<span class="dlg-event-desc-body"></span>
+						<span class="dlg-btn-edit">Edit</span>
 					</div>
-					<div class="dlg-event-people">
-					</div>
-					<div class="dlg-event-place">
-						<div>
-							<span class="btn-icon">
-								<svg class="icon-marker" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
-								<g id="Layer_7" display="none">
-									<path display="inline" d="M84.938,26.044H15.062c-0.547,0-0.998,0.446-0.998,0.997v45.916c0,0.553,0.451,0.999,0.998,0.999h69.875   c0.555,0,0.998-0.446,0.998-0.999V27.041C85.936,26.49,85.492,26.044,84.938,26.044z M83.777,46.589H16.23v-9.98h67.547V46.589z"/>
-								</g>
-								<g id="Your_Icon" display="none">
-									<path display="inline" d="M85.98,37.144c0-10.476-8.258-18.719-18.434-18.719c-8.217,0-15.168,5.661-17.549,13.31   c-2.383-7.648-9.334-13.113-17.551-13.113c-10.178,0-18.428,8.008-18.428,18.488c0,5.288,2.107,9.024,5.498,13.022h-0.049   l30.547,31.442l30.543-31.442h-0.08C83.871,46.134,85.98,42.428,85.98,37.144z"/>
-								</g>
-								<g id="Layer_6">
-									<path d="M50,14.064c-13.23,0-23.957,10.726-23.957,23.957C26.043,51.25,50,85.936,50,85.936S73.957,51.25,73.957,38.021   C73.957,24.79,63.229,14.064,50,14.064z M50,50.497c-6.617,0-11.979-5.359-11.979-11.977c0-6.616,5.361-11.978,11.979-11.978   c6.613,0,11.979,5.362,11.979,11.978C61.979,45.138,56.613,50.497,50,50.497z"/>
-								</g>
-								<g id="Layer_5" display="none">
-									<polygon display="inline" points="85.982,32.037 85.982,14.051 85.982,14.047 67.993,14.047 67.993,14.047 26.013,14.047    26.013,32.037 50.971,32.037 14.018,68.99 30.98,85.953 67.993,48.942 67.993,74.017 85.982,74.017 85.982,32.037  "/>
-								</g>
-								<g id="Layer_4" display="none">
-									<polygon display="inline" points="62.011,14.107 38.022,14.107 54.017,38.097 14.034,38.097 14.034,62.082 54.015,62.082    38.022,86.071 62.011,86.071 86,50.087  "/>
-								</g>
-								</svg>
-							</span>
-							<span class="place-name btn-link">
-							</span>
-						</div>
-						<img />
-					</div>
-					<div class="dlg-event-tags">
-					</div>
-					<div class="dlg-buttons">
-						<div class="buttons-tools">
-							<span class="btn-icon btn-photo">
-								<form style="display: inline-block;">
-									<label>
-								<svg class="icon-photo" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" width="100.0px" height="100px" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve">
-								<path d="M480,80v352H32V80H480 M512,48H0v416h512V48L512,48z M448,240l-96-96L224,272l-96-64l-64,96v96h384V240z"/>
-								</svg>
-									<input class="file-photo" type="file" />
-									</label>
-								</form>
-							</span>
-							<span class="btn-icon btn-people btn-menu" target=".menu-people">
-								<svg class="icon-people" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
-								<g>
-									<path d="M78.685,56.269l-0.013-3.177c4.492,0.587,13.649-2.684,13.649-2.684c-3.104-3.174-3.806-6.879-5.844-21.417   C84.44,14.452,71.805,14.588,70.854,14.588S57.267,14.452,55.229,28.99c-2.038,14.538-2.74,18.243-5.843,21.417   c0,0,9.157,3.271,13.649,2.684l-0.013,3.177c-2.305,2.527-5.047,4.457-7.783,6.102c0.896,0.508,1.785,0.999,2.649,1.473   c6.106,3.35,11.874,6.513,11.874,12.85v6.926h28.4c0.975,0,1.765-0.791,1.765-1.766v-7.94   C99.928,66.631,86.677,65.033,78.685,56.269z"/>
-								</g>
-								<path d="M99.843,73.97v7.94"/>
-								<path d="M43.186,57.071L43.186,57.071v-2.551c2.317-2.701,4.064-5.818,5.253-9.45  c0.169-0.519,0.328-1.048,0.474-1.587c1.214-0.623,2.202-2.282,2.424-4.317c0.075-0.677,0.059-1.331-0.035-1.936  c-0.158-1.007-0.531-1.874-1.053-2.472c0.104-1.927,0.108-3.963,0.018-6.109c-0.07-1.669-0.197-3.404-0.388-5.216  c-0.047-0.448-0.107-0.878-0.179-1.295c-1.807-10.416-11.285-11.445-14.886-11.454c-0.144-0.001-2.636-0.001-2.78,0  c-3.601,0.008-13.079,1.038-14.886,11.454c-0.072,0.417-0.132,0.848-0.179,1.295c-0.19,1.812-0.316,3.546-0.388,5.216  c-0.091,2.146-0.087,4.183,0.018,6.109c-0.523,0.598-0.896,1.465-1.052,2.472c-0.095,0.605-0.111,1.259-0.037,1.936  c0.224,2.035,1.21,3.695,2.425,4.317c0.294,1.08,0.633,2.116,1.019,3.112c1.155,2.989,2.723,5.609,4.709,7.925v2.55v0.001  C14.775,66.818,0.084,68.594,0.084,76.692v8.828c0,1.084,0.878,1.964,1.963,1.964h62.753c1.084,0,1.962-0.88,1.962-1.964v-8.828  C66.763,68.594,52.072,66.818,43.186,57.071z"/>
-								</svg>
-								<div class="menu menu-people">
-									<div class="people">
-									</div>
-									<div class="buttons">
-										<button class="btn-cancel">Cancel</button>
-										<button class="btn-post">Apply</button>
-									</div>
-								</div>
-							</span>
-							<span class="btn-icon btn-place">
-								<svg class="icon-marker" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
-								<g id="Layer_7" display="none">
-									<path display="inline" d="M84.938,26.044H15.062c-0.547,0-0.998,0.446-0.998,0.997v45.916c0,0.553,0.451,0.999,0.998,0.999h69.875   c0.555,0,0.998-0.446,0.998-0.999V27.041C85.936,26.49,85.492,26.044,84.938,26.044z M83.777,46.589H16.23v-9.98h67.547V46.589z"/>
-								</g>
-								<g id="Your_Icon" display="none">
-									<path display="inline" d="M85.98,37.144c0-10.476-8.258-18.719-18.434-18.719c-8.217,0-15.168,5.661-17.549,13.31   c-2.383-7.648-9.334-13.113-17.551-13.113c-10.178,0-18.428,8.008-18.428,18.488c0,5.288,2.107,9.024,5.498,13.022h-0.049   l30.547,31.442l30.543-31.442h-0.08C83.871,46.134,85.98,42.428,85.98,37.144z"/>
-								</g>
-								<g id="Layer_6">
-									<path d="M50,14.064c-13.23,0-23.957,10.726-23.957,23.957C26.043,51.25,50,85.936,50,85.936S73.957,51.25,73.957,38.021   C73.957,24.79,63.229,14.064,50,14.064z M50,50.497c-6.617,0-11.979-5.359-11.979-11.977c0-6.616,5.361-11.978,11.979-11.978   c6.613,0,11.979,5.362,11.979,11.978C61.979,45.138,56.613,50.497,50,50.497z"/>
-								</g>
-								<g id="Layer_5" display="none">
-									<polygon display="inline" points="85.982,32.037 85.982,14.051 85.982,14.047 67.993,14.047 67.993,14.047 26.013,14.047    26.013,32.037 50.971,32.037 14.018,68.99 30.98,85.953 67.993,48.942 67.993,74.017 85.982,74.017 85.982,32.037  "/>
-								</g>
-								<g id="Layer_4" display="none">
-									<polygon display="inline" points="62.011,14.107 38.022,14.107 54.017,38.097 14.034,38.097 14.034,62.082 54.015,62.082    38.022,86.071 62.011,86.071 86,50.087  "/>
-								</g>
-								</svg>
-							</span>
-							<span class="btn-icon btn-tag btn-menu" target=".menu-tags">
-							<svg class="icon-tag" xmlns="http://www.w3.org/2000/svg" version="1.1" width="32" height="32" data-icon="tag" viewBox="0 0 32 32">
-							  <path d="M.5 0c-.3 0-.5.2-.5.5v11c0 .3.206.706.406.906l19.281 19.281c.14.14.33.182.5.125h.031l11.594-11.594c.005-.011-.004-.02 0-.031.057-.17.015-.36-.125-.5l-19.281-19.281c-.2-.2-.606-.406-.906-.406h-11zm6 4c1.4 0 2.5 1.1 2.5 2.5s-1.1 2.5-2.5 2.5-2.5-1.1-2.5-2.5 1.1-2.5 2.5-2.5z"/>
+				</div>
+				<div class="dlg-event-people">
+				</div>
+				<div class="dlg-event-place">
+					<div>
+						<span class="btn-icon">
+							<svg class="icon-marker" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
+							<g id="Layer_7" display="none">
+								<path display="inline" d="M84.938,26.044H15.062c-0.547,0-0.998,0.446-0.998,0.997v45.916c0,0.553,0.451,0.999,0.998,0.999h69.875   c0.555,0,0.998-0.446,0.998-0.999V27.041C85.936,26.49,85.492,26.044,84.938,26.044z M83.777,46.589H16.23v-9.98h67.547V46.589z"/>
+							</g>
+							<g id="Your_Icon" display="none">
+								<path display="inline" d="M85.98,37.144c0-10.476-8.258-18.719-18.434-18.719c-8.217,0-15.168,5.661-17.549,13.31   c-2.383-7.648-9.334-13.113-17.551-13.113c-10.178,0-18.428,8.008-18.428,18.488c0,5.288,2.107,9.024,5.498,13.022h-0.049   l30.547,31.442l30.543-31.442h-0.08C83.871,46.134,85.98,42.428,85.98,37.144z"/>
+							</g>
+							<g id="Layer_6">
+								<path d="M50,14.064c-13.23,0-23.957,10.726-23.957,23.957C26.043,51.25,50,85.936,50,85.936S73.957,51.25,73.957,38.021   C73.957,24.79,63.229,14.064,50,14.064z M50,50.497c-6.617,0-11.979-5.359-11.979-11.977c0-6.616,5.361-11.978,11.979-11.978   c6.613,0,11.979,5.362,11.979,11.978C61.979,45.138,56.613,50.497,50,50.497z"/>
+							</g>
+							<g id="Layer_5" display="none">
+								<polygon display="inline" points="85.982,32.037 85.982,14.051 85.982,14.047 67.993,14.047 67.993,14.047 26.013,14.047    26.013,32.037 50.971,32.037 14.018,68.99 30.98,85.953 67.993,48.942 67.993,74.017 85.982,74.017 85.982,32.037  "/>
+							</g>
+							<g id="Layer_4" display="none">
+								<polygon display="inline" points="62.011,14.107 38.022,14.107 54.017,38.097 14.034,38.097 14.034,62.082 54.015,62.082    38.022,86.071 62.011,86.071 86,50.087  "/>
+							</g>
 							</svg>
-							<div class="menu menu-tags">
-								<div class="input-text">
-									<input type="text" autocomplete="off" />
-									<span class="btn-add">
-										<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
-										<g id="Plus">
-											<circle stroke-width="6" stroke-miterlimit="10" cx="50" cy="50" r="47"/>
-											<line stroke-width="6" stroke-miterlimit="10" x1="50" y1="19" x2="50" y2="79"/>
-											<line stroke-width="6" stroke-miterlimit="10" x1="80" y1="50" x2="20" y2="50"/>
-										</g>
-										</svg>
-									</span>
-								</div>
-								<div class="tags">
+						</span>
+						<span class="place-name btn-link">
+						</span>
+					</div>
+					<img />
+				</div>
+				<div class="dlg-event-tags">
+				</div>
+				<div class="dlg-buttons">
+					<div class="buttons-tools">
+						<span class="btn-icon btn-photo">
+							<form style="display: inline-block;">
+								<label>
+							<svg class="icon-photo" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" width="100.0px" height="100px" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve">
+							<path d="M480,80v352H32V80H480 M512,48H0v416h512V48L512,48z M448,240l-96-96L224,272l-96-64l-64,96v96h384V240z"/>
+							</svg>
+								<input class="file-photo" type="file" />
+								</label>
+							</form>
+						</span>
+						<span class="btn-icon btn-people btn-menu" target=".menu-people">
+							<svg class="icon-people" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
+							<g>
+								<path d="M78.685,56.269l-0.013-3.177c4.492,0.587,13.649-2.684,13.649-2.684c-3.104-3.174-3.806-6.879-5.844-21.417   C84.44,14.452,71.805,14.588,70.854,14.588S57.267,14.452,55.229,28.99c-2.038,14.538-2.74,18.243-5.843,21.417   c0,0,9.157,3.271,13.649,2.684l-0.013,3.177c-2.305,2.527-5.047,4.457-7.783,6.102c0.896,0.508,1.785,0.999,2.649,1.473   c6.106,3.35,11.874,6.513,11.874,12.85v6.926h28.4c0.975,0,1.765-0.791,1.765-1.766v-7.94   C99.928,66.631,86.677,65.033,78.685,56.269z"/>
+							</g>
+							<path d="M99.843,73.97v7.94"/>
+							<path d="M43.186,57.071L43.186,57.071v-2.551c2.317-2.701,4.064-5.818,5.253-9.45  c0.169-0.519,0.328-1.048,0.474-1.587c1.214-0.623,2.202-2.282,2.424-4.317c0.075-0.677,0.059-1.331-0.035-1.936  c-0.158-1.007-0.531-1.874-1.053-2.472c0.104-1.927,0.108-3.963,0.018-6.109c-0.07-1.669-0.197-3.404-0.388-5.216  c-0.047-0.448-0.107-0.878-0.179-1.295c-1.807-10.416-11.285-11.445-14.886-11.454c-0.144-0.001-2.636-0.001-2.78,0  c-3.601,0.008-13.079,1.038-14.886,11.454c-0.072,0.417-0.132,0.848-0.179,1.295c-0.19,1.812-0.316,3.546-0.388,5.216  c-0.091,2.146-0.087,4.183,0.018,6.109c-0.523,0.598-0.896,1.465-1.052,2.472c-0.095,0.605-0.111,1.259-0.037,1.936  c0.224,2.035,1.21,3.695,2.425,4.317c0.294,1.08,0.633,2.116,1.019,3.112c1.155,2.989,2.723,5.609,4.709,7.925v2.55v0.001  C14.775,66.818,0.084,68.594,0.084,76.692v8.828c0,1.084,0.878,1.964,1.963,1.964h62.753c1.084,0,1.962-0.88,1.962-1.964v-8.828  C66.763,68.594,52.072,66.818,43.186,57.071z"/>
+							</svg>
+							<div class="menu menu-people">
+								<div class="people">
 								</div>
 								<div class="buttons">
 									<button class="btn-cancel">Cancel</button>
 									<button class="btn-post">Apply</button>
 								</div>
 							</div>
-							</span>
+						</span>
+						<span class="btn-icon btn-place">
+							<svg class="icon-marker" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
+							<g id="Layer_7" display="none">
+								<path display="inline" d="M84.938,26.044H15.062c-0.547,0-0.998,0.446-0.998,0.997v45.916c0,0.553,0.451,0.999,0.998,0.999h69.875   c0.555,0,0.998-0.446,0.998-0.999V27.041C85.936,26.49,85.492,26.044,84.938,26.044z M83.777,46.589H16.23v-9.98h67.547V46.589z"/>
+							</g>
+							<g id="Your_Icon" display="none">
+								<path display="inline" d="M85.98,37.144c0-10.476-8.258-18.719-18.434-18.719c-8.217,0-15.168,5.661-17.549,13.31   c-2.383-7.648-9.334-13.113-17.551-13.113c-10.178,0-18.428,8.008-18.428,18.488c0,5.288,2.107,9.024,5.498,13.022h-0.049   l30.547,31.442l30.543-31.442h-0.08C83.871,46.134,85.98,42.428,85.98,37.144z"/>
+							</g>
+							<g id="Layer_6">
+								<path d="M50,14.064c-13.23,0-23.957,10.726-23.957,23.957C26.043,51.25,50,85.936,50,85.936S73.957,51.25,73.957,38.021   C73.957,24.79,63.229,14.064,50,14.064z M50,50.497c-6.617,0-11.979-5.359-11.979-11.977c0-6.616,5.361-11.978,11.979-11.978   c6.613,0,11.979,5.362,11.979,11.978C61.979,45.138,56.613,50.497,50,50.497z"/>
+							</g>
+							<g id="Layer_5" display="none">
+								<polygon display="inline" points="85.982,32.037 85.982,14.051 85.982,14.047 67.993,14.047 67.993,14.047 26.013,14.047    26.013,32.037 50.971,32.037 14.018,68.99 30.98,85.953 67.993,48.942 67.993,74.017 85.982,74.017 85.982,32.037  "/>
+							</g>
+							<g id="Layer_4" display="none">
+								<polygon display="inline" points="62.011,14.107 38.022,14.107 54.017,38.097 14.034,38.097 14.034,62.082 54.015,62.082    38.022,86.071 62.011,86.071 86,50.087  "/>
+							</g>
+							</svg>
+						</span>
+						<span class="btn-icon btn-tag btn-menu" target=".menu-tags">
+						<svg class="icon-tag" xmlns="http://www.w3.org/2000/svg" version="1.1" width="32" height="32" data-icon="tag" viewBox="0 0 32 32">
+						  <path d="M.5 0c-.3 0-.5.2-.5.5v11c0 .3.206.706.406.906l19.281 19.281c.14.14.33.182.5.125h.031l11.594-11.594c.005-.011-.004-.02 0-.031.057-.17.015-.36-.125-.5l-19.281-19.281c-.2-.2-.606-.406-.906-.406h-11zm6 4c1.4 0 2.5 1.1 2.5 2.5s-1.1 2.5-2.5 2.5-2.5-1.1-2.5-2.5 1.1-2.5 2.5-2.5z"/>
+						</svg>
+						<div class="menu menu-tags">
+							<div class="input-text">
+								<input type="text" autocomplete="off" />
+								<span class="btn-add">
+									<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
+									<g id="Plus">
+										<circle stroke-width="6" stroke-miterlimit="10" cx="50" cy="50" r="47"/>
+										<line stroke-width="6" stroke-miterlimit="10" x1="50" y1="19" x2="50" y2="79"/>
+										<line stroke-width="6" stroke-miterlimit="10" x1="80" y1="50" x2="20" y2="50"/>
+									</g>
+									</svg>
+								</span>
+							</div>
+							<div class="tags">
+							</div>
+							<div class="buttons">
+								<button class="btn-cancel">Cancel</button>
+								<button class="btn-post">Apply</button>
+							</div>
 						</div>
-						<div class="buttons-act">
-							<button class="btn-post">Done</button>
-						</div>
+						</span>
 					</div>
-					<div class="dlg-event-loading" style="display:none;"><img src="/static/images/loading.gif" /></div>
-					<div class="dlg-place-picker" style="display:none;">
-						<div class="map-canvas">
-						</div>
-						<div class="text-autocomplete">
-							<input class="text-search-place map-controls" type="text" autocomplete="off" />
-							<div class="autocomplete-suggestions"></div>
-						</div>
+					<div class="buttons-act">
+						<button class="btn-post">Done</button>
+					</div>
+				</div>
+				<div class="dlg-event-loading" style="display:none;"><img src="/static/images/loading.gif" /></div>
+				<div class="dlg-place-picker" style="display:none;">
+					<div class="map-canvas">
+					</div>
+					<div class="text-autocomplete">
+						<input class="text-search-place map-controls" type="text" autocomplete="off" />
+						<div class="autocomplete-suggestions"></div>
 					</div>
 				</div>
 			</div>

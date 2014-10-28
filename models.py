@@ -471,7 +471,8 @@ class Notification(BaseModel):
         'journey_like' : 2000001,
         'journey_comment' : 2000002,
         'journey_star' : 2000003,
-        'journey_tagged' : 2000004,
+        'event_tagged' : 2000004,
+        'event_edited' : 2000005,
         'photo_like' : 3000001,
         'photo_comment' : 3000002
     }
@@ -485,23 +486,39 @@ class Notification(BaseModel):
     updated_time = ndb.DateTimeProperty(auto_now=True)
     
     @staticmethod
-    def post(owner_key, msg_type, user_key, target=None):
-        n = Notification(parent=owner_key, msg_type=msg_type, user=user_key)
+    def post(target_key, msg_type, user_key, target=None):
+        n = Notification(parent=target_key, msg_type=msg_type, user=user_key)
         if target:
             n.target = target
         n.put()
         
     @staticmethod
-    def get_messages(user_key, min_count=5):
-        q = Notification.query(Notification.read == False, ancestor=user_key).order(-Notification.created_time)
-        msgs = [r for r in q]
-        if len(msgs) < 5:
-            q = Notification.query(Notification.read == True, ancestor=user_key).order(-Notification.created_time).fetch(min_count)
-            msgs = msgs + [r for r in q]
-        return msgs
+    def post_multi(target_keys, msg_type, user_key, target=None):
+        if (not target_keys) or len(target_keys) == 0:
+            return
+        updated = []
+        for target_key in target_keys:
+            n = Notification(parent=target_key, msg_type=msg_type, user=user_key)
+            if target:
+                n.target = target
+            updated.append(n)
+        ndb.put_multi(updated)
         
     @staticmethod
-    def get_unseen_count(user_key, max_count=9):
+    def get_messages(user_key, max_count=10, cursor=None):
+        q = Notification.query(ancestor=user_key).order(Notification.created_time)
+        return q.fetch_page(max_count, start_cursor=cursor)
+        
+    @staticmethod
+    def get_older_messages(user_key, max_count=10, cursor=None):
+        q = Notification.query(ancestor=user_key).order(-Notification.created_time)
+        #qi = Notification.query(ancestor=user_key).order(-Notification.created_time).iter()
+        #for i in range(10):
+        #    logging.info(qi.cursor_before().urlsafe())
+        return q.fetch_page(max_count, start_cursor=cursor)
+        
+    @staticmethod
+    def get_unseen_count(user_key, max_count=99):
         return Notification.query(Notification.seen == False, ancestor=user_key).order(-Notification.created_time).count(limit=max_count)
         
     @staticmethod
@@ -512,7 +529,9 @@ class Notification(BaseModel):
             return {
                 Notification.MESSAGES['friend_following']:lambda n : "%s is now following you" % (n['user']['name']),
                 Notification.MESSAGES['journey_like']:lambda n : "%s likes your story\"%s\"" % (n['user']['name'], n['target']['title']),
-                Notification.MESSAGES['journey_comment']:lambda n : "%s commented on your story: \"%s\"" % (n['user']['name'], escape(n['target']['content']))
+                Notification.MESSAGES['journey_comment']:lambda n : "%s commented on your story: \"%s\"" % (n['user']['name'], escape(n['target']['content'])),
+                Notification.MESSAGES['event_tagged']:lambda n : "%s tagged you in an event" % (n['user']['name']),
+                Notification.MESSAGES['event_edited']:lambda n : "%s edited an event that you are tagged in" % (n['user']['name'])
             }[msg_type](n)
         else:
             return ""
@@ -538,6 +557,17 @@ class Notification(BaseModel):
             r.seen = True
             updated.append(r)
         ndb.put_multi(updated)
+        
+    @staticmethod
+    def mark_as_seen_multi(user_key, keys):
+        msgs = ndb.get_multi(keys)
+        updated = []
+        for msg in msgs:
+            if msg.key.parent() == user_key:
+                msg.seen = True
+                updated.append(msg)
+        if len(updated) > 0:
+            ndb.put_multi(updated)
     
     def mark_as_read(self):
         self.read = True
@@ -554,12 +584,13 @@ class Notification(BaseModel):
             user=self.user.get().to_dict(),
             target = self.target.get().to_dict() if self.target else None,
             read = self.read,
-            formatted_created_time=formatted_time(self.created_time)
+            seen = self.seen,
+            created_time=self.created_time.strftime(DATETIME_FORMAT)
                 )
         message_str = Notification.get_message_str(d)
-        message_link = Notification.get_message_link(d)
+        #message_link = Notification.get_message_link(d)
         d['message_str'] = message_str
-        d['message_link'] = message_link
+        #d['message_link'] = message_link
         return d
 
 class Tag(BaseModel):

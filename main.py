@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from datetime import datetime
 import httplib
 import json
 import webapp2
@@ -22,6 +23,7 @@ from webapp2_extras import sessions
 from google.appengine.api import images
 from google.appengine.ext import blobstore
 from google.appengine.ext import ndb
+from google.appengine.datastore.datastore_query import Cursor
 
 import facebook
 import gcs
@@ -181,17 +183,24 @@ class EventHandler(BaseHandler):
             #TODO check owner
             owner = User.parse_key(user['id'])
             e = None
+            is_new = False
             if id:
                 e = Event.from_id(id)
                 if not e.is_owner(user['id']):
                     self.error(httplib.FORBIDDEN)
                     self.send_json(False)
                     return
+                is_new = False
             else:
                 e = Event(parent=owner)
+                is_new = True
             if 'desc' in data:
                 e.description = models.escape(data['desc'], link=True, br=True)
             if 'pid' in data:
+                if e.photo:
+                    old_photo = e.photo.get()
+                    old_photo.draft = True
+                    old_photo.put()
                 photo = Photo.from_id(data['pid'])
                 if photo:
                     photo.draft = False
@@ -215,6 +224,10 @@ class EventHandler(BaseHandler):
                 e.tags = tags
             e.who_can_see = [owner] + e.people
             e.put()
+            if is_new:
+                Notification.post_multi(e.people, Notification.MESSAGES["event_tagged"], e.key.parent(), e.key)
+            else:
+                Notification.post_multi(e.people, Notification.MESSAGES["event_edited"], e.key.parent(), e.key)
             return self.send_json(e.to_dict())
         self.send_json(False)
         
@@ -345,6 +358,78 @@ class TagHandler(BaseHandler):
             tag = Tag.from_user_id(self.current_user['id'])
             return self.send_json(tag.tags if tag else [])
         self.send_json(False)
+        
+class MessagesHandler(BaseHandler):
+    def get(self):
+        direction = self.request.get("d")
+        cursor_urlsafe = self.request.get("c")
+        user = self.current_user
+        if direction and user:
+            msgs = []
+            cursor = None
+            user_key = User.parse_key(user['id'])
+            if cursor_urlsafe:
+                cursor = Cursor(urlsafe=cursor_urlsafe)
+            if direction == "f":
+                msgs, cursor_f, more = Notification.get_messages(user_key, 10, cursor)
+                self.send_json({"msgs":[ msg.to_dict() for msg in msgs ], "more":more, "cursor_f":cursor_f.urlsafe() if cursor_f else None })
+            elif direction == "b":
+                msgs, cursor_b, more = Notification.get_older_messages(user_key, 10, cursor)
+                ret = {"msgs":[ msg.to_dict() for msg in msgs ], "more":more, "cursor_b":cursor_b.urlsafe() if cursor_b else None }
+                if not cursor_urlsafe:
+                    #for first time, retrieve back to get forward cursor
+                    cursor_f = cursor_b.reversed()
+                    msgs, cursor_f, more = Notification.get_messages(user_key, 10, cursor_f)
+                    ret["cursor_f"] = cursor_f.urlsafe()
+                self.send_json(ret)
+            else:
+                self.send_json({ "msgs":msgs})
+            return
+        self.send_json(False)
+        
+    def post(self):
+        user = self.current_user
+        if user:
+            data = json.loads(self.request.get("data"))
+            ids = data["ids"]
+            keys = [Notification.parse_key(id, parent=user['id']) for id in ids]
+            notifications = ndb.get_multi(keys)
+            for n in notifications:
+                if n:
+                    n.read = True
+            ndb.put_multi(notifications)    
+            self.send_json(True)
+        else:
+            self.send_json(False)
+        
+class MessagesCountHandler(BaseHandler):
+    def get(self):
+        current_user = self.current_user
+        if current_user:
+            self.send_json({"count":Notification.get_unseen_count(User.parse_key(current_user["id"]))})
+            return
+        self.send_json(False)
+        
+class MessagesSeenHandler(BaseHandler):
+    def post(self):
+        current_user = self.current_user
+        if current_user:
+            user_id = current_user["id"]
+            data = json.loads(self.request.get("data"))
+            ids = data["ids"]
+            keys = [Notification.parse_key(id, parent=user_id) for id in ids]
+            Notification.mark_as_seen_multi(User.parse_key(user_id), keys)
+            
+class MessageReadHandler(BaseHandler):
+    def post(self, id):
+        current_user = self.current_user
+        if current_user and id:
+            user_id = current_user["id"]
+            n = Notification.parse_key(id, parent=user_id).get()
+            if n.key.parent().integer_id() == user_id:
+                n.mark_as_read()
+            return self.send_json(True)
+        self.send_json(False)
 
 class DemoHandler(BaseHandler):
     def get(self):
@@ -366,11 +451,19 @@ class DemoHandler(BaseHandler):
             f = user.get_friends()
             f.suggestions.append(new_user.key)
             f.put()
+            
+            q = Event.query()
+            for e in q:
+                Notification.post_multi([user.key], Notification.MESSAGES["event_tagged"], e.key.parent(), e.key)
 
 app = webapp2.WSGIApplication([
     ('/_api/event/([^/]+)?', EventHandler),
     ('/_api/event', EventHandler),
     ('/_api/events', EventsHandler),
+    ('/_api/me/message/([^/]+)?/read', MessageReadHandler),
+    ('/_api/me/messages', MessagesHandler),
+    ('/_api/me/messages/count', MessagesCountHandler),
+    ('/_api/me/messages/seen', MessagesSeenHandler),
     ('/_api/me/friends', FriendHandler),
     ('/_api/photo', PhotoHandler),
     ('/_api/tag', TagHandler),

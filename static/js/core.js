@@ -32,7 +32,8 @@ if (!String.prototype.format) {
 
 core = {
 	DATE_FORMAT:"yyyy-mm-dd",
-	DATETIME_FORMAT:"yyyy-mm-dd hh:MM:ss",
+	DATETIME_FORMAT:"yyyy-mm-dd HH:MM:ss",
+	TIME12_FORMAT:"h:MM TT",
 	timezone:(-new Date().getTimezoneOffset()/60),
 	events: {
 		bind:function(obj, type, callback) {
@@ -100,7 +101,7 @@ core.api = function() {
 
 	var that = this;
 	$.ajax(opts).done(function(response) {
-		var res = JSON.parse(response);
+		var res = response ? JSON.parse(response) : null;
 		if(callback) {
 			callback(res);
 		}
@@ -318,6 +319,11 @@ function format_time(time, from_now) {
 	if (typeof from_now === 'undefined')
 		from_now = true;
 	var days = Math.floor(diff / 24.0 / 60.0 / 60.0 / 1000.0);
+	if (days == 0 && (now.getFullYear() != target.getFullYear()
+				|| now.getMonth() != target.getMonth()
+				|| now.getDate() != target.getDate())) {
+		days += 1;
+	}
     if (from_now && days ==0) {
         var seconds = Math.floor(diff / 1000.0);
         var hours = Math.floor(seconds / 60.0 / 60.0);

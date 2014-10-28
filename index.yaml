@@ -35,3 +35,28 @@ indexes:
   properties:
   - name: event_time
     direction: desc
+
+- kind: Notification
+  ancestor: yes
+  properties:
+  - name: created_time
+
+- kind: Notification
+  ancestor: yes
+  properties:
+  - name: created_time
+    direction: desc
+
+- kind: Notification
+  ancestor: yes
+  properties:
+  - name: read
+  - name: created_time
+    direction: desc
+
+- kind: Notification
+  ancestor: yes
+  properties:
+  - name: seen
+  - name: created_time
+    direction: desc
