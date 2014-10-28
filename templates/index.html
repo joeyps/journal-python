@@ -101,6 +101,33 @@
 			height: 18px;
 		}
 		
+		.btn-align-top {
+			background-color:rgba(0, 0, 0, 0.5);
+			position:fixed;
+			right:10px;
+			bottom:-60px;
+			border-radius:4px;
+			padding: 8px;
+			-webkit-transition:bottom .5s ease-in-out;
+			transition:bottom .5s ease-in-out;
+			cursor:pointer;
+		}
+		
+		.btn-align-top.show {
+			bottom:10px;
+		}
+		
+		.btn-align-top .icon-align-top {
+			fill:#91949d;
+			width:36px;
+			height:36px;
+			display: block;
+		}
+		
+		.btn-align-top:hover .icon-align-top {
+			fill:#fff;
+		}
+		
 		.sidepanel {
 			background-color:#393939;
 			position:fixed;
@@ -1503,6 +1530,11 @@
 			this.view = view;
 			this.count = this.view.find(".count");
 			this.fetch();
+			var me = this;
+			this.alarm = new Alarm(function() {
+				me.fetch();
+				me.startListening();
+			});
 		}
 		
 		NotificationCounter.prototype.fetch = function() {
@@ -1518,6 +1550,15 @@
 					}
 				}
 			});
+		};
+		
+		NotificationCounter.prototype.startListening = function() {
+			this.alarm.cancel();
+			this.alarm.start(120000);
+		};
+		
+		NotificationCounter.prototype.stopListening = function() {
+			this.alarm.cancel();
 		};
 		
 		function Notifications(view) {
@@ -1656,6 +1697,21 @@
 		
 		function SidePanel(view) {
 			this.view = view;
+			this.view.on("mousewheel DOMMouseScroll", function(e) {
+				var scrollTo = null;
+
+			    if (e.type == 'mousewheel') {
+			        scrollTo = (e.originalEvent.wheelDelta * -1);
+			    }
+			    else if (e.type == 'DOMMouseScroll') {
+			        scrollTo = 40 * e.originalEvent.detail;
+			    }
+
+			    if (scrollTo) {
+			        e.preventDefault();
+			        $(this).scrollTop(scrollTo + $(this).scrollTop());
+			    }
+			});
 			this.messages = new Notifications(this.view.find(".notification"));
 			var me = this;
 			this.alarm = new Alarm(function() {
@@ -2320,6 +2376,24 @@
 					sidepanel.messages.notifyNewMessage();
 			});
 			
+			var btnAlignTop = $(".btn-align-top").click(function() {
+				$("body").animate({
+					scrollTop:"0px"
+				}, 1000);
+			});
+			$(window).focus(function() {
+				counter.fetch();
+				counter.startListening();
+			}).blur(function() {
+				counter.stopListening();
+			}).on("scroll", function() {
+				if ($(this).scrollTop() > 200) {
+					btnAlignTop.addClass("show");
+				} else {
+					btnAlignTop.removeClass("show");
+				}
+			});
+			
 			var dlgDrop = $("#dlg_drop");
 			var droparea = dlgDrop.find(".droparea");
 			droparea.on('dragenter', function(e) {
@@ -2584,6 +2658,17 @@
 				</div>
 			</div>
 			
+		</div>
+		<div class="btn-align-top">
+			<svg class="icon-align-top" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
+			<g id="Your_Icon">
+				<g>
+					<polygon points="67.794,60 49.188,34.703 30.584,60   "/>
+					<rect x="10" y="15" width="80" height="10"/>
+					<rect x="45" y="60" width="8" height="25"/>
+				</g>
+			</g>
+			</svg>
 		</div>
 		<div class="sidepanel">
 			<div class="header">
