@@ -276,7 +276,8 @@
 			border-radius: 4px;
 		}
 		
-		#dlg_tags .dlg-content:after {
+		#dlg_tags .dlg-content:after,
+		#dlg_friends .dlg-content:after {
 			clear:both;
 			content:" ";
 			display:block;
@@ -289,6 +290,23 @@
 		
 		#dlg_tags .dlg-content .tag-event-count {
 			margin-left:40px;
+		}
+		
+		#dlg_friends .dlg-content>div.user {
+			float:left;
+			width:100px;
+			margin:0px 15px 10px 0px;
+		}
+		
+		#dlg_friends .dlg-content img {
+			width:100px;
+			height:100px;
+		}
+		
+		#dlg_friends .dlg-content .user-name {
+			height:50px;
+			text-align:center;
+			padding-top:5px;
 		}
 		
 		.dlg .dlg-header {
@@ -1955,14 +1973,30 @@
 		
 		function FriendsDialog(view) {
 			this.view = view;
+			this.content = view.find(".dlg-content");
 		}
 		
 		FriendsDialog.prototype.show = function() {
 			this.view.show();
+			this.fetch();
 		};
 		
 		FriendsDialog.prototype.hide = function() {
 			this.view.hide();
+		};
+		
+		FriendsDialog.prototype.fetch = function() {
+			var me = this;
+			core.api("/me/friends", "GET", function(res) {
+				if (res) {
+					me.content.html("");
+					for (var i in res) {
+						var user = res[i];
+						me.content.append("<div class='user' key='" + user.id + "'>" + 
+								"<img src='" + user.profile_picture + "' /><div class='user-name'>" + user.name +"</div</div>");
+					}
+				}
+			});
 		};
 		
 		function DialogEvent(view, opts) {
@@ -2588,9 +2622,9 @@
 				tagsDialog.show();
 			});
 			
-			var tagsFriends = new TagsDialog($("#dlg_friends"));
+			var friendsDialog = new FriendsDialog($("#dlg_friends"));
 			var btnFriends = $(".box.user .btn-friends").click(function() {
-				tagsFriends.show();
+				friendsDialog.show();
 			});
 			
 			var sidepanel = new SidePanel($(".sidepanel"));

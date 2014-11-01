@@ -188,7 +188,9 @@ class User(BaseModel):
     def to_dict(self):
         d = dict(id=self.id,
                 name=self.name,
-                profile_picture=self.profile_picture
+                profile_picture=self.profile_picture,
+                oauth_provider=self.oauth_provider,
+                oauth_uid=self.oauth_uid
                 )
         return d
 
