@@ -276,8 +276,6 @@ class PhotoHandler(BaseHandler):
                 img.execute_transforms(parse_source_metadata=True)
                 return img
             img = read_image(file.value)
-            w = img.width
-            h = img.height
             exif = img.get_original_metadata()
             logging.info(exif)
             
@@ -286,7 +284,9 @@ class PhotoHandler(BaseHandler):
             def resize_image(file_content):
                 return images.resize(file_content, PHOTO_MAX_SIZE, PHOTO_MAX_SIZE, output_encoding=images.JPEG, correct_orientation=images.CORRECT_ORIENTATION)
             imgfile = resize_image(file.value)
-            
+            img = images.Image(imgfile)
+            w = img.width
+            h = img.height
             @utils.timing
             @ndb.transactional
             def do_transaction():
@@ -294,7 +294,7 @@ class PhotoHandler(BaseHandler):
                 PhotoHandler.apply_exif_for_photo(photo, exif)
                 photo.put()            
                 return photo
-                
+            
             photo = do_transaction()
 
             filename = "%s/%d" % (user['id'], photo.id)
@@ -357,6 +357,20 @@ class TagHandler(BaseHandler):
         if current_user:
             tag = Tag.from_user_id(self.current_user['id'])
             return self.send_json(tag.tags if tag else [])
+        self.send_json(False)
+        
+class TagsHandler(BaseHandler):
+    def get(self):
+        current_user = self.current_user
+        if current_user:
+            user_key = User.parse_key(current_user['id'])
+            tag = Tag.from_user_id(current_user['id'])
+            tags = tag.tags if tag else []
+            ret_tags = []
+            for tag in tags:
+                count = Event.query(ancestor=user_key).filter(Event.tags == tag).count(limit=999, keys_only=True)
+                ret_tags.append({"name":tag, "count":count })
+            return self.send_json(ret_tags)
         self.send_json(False)
         
 class MessagesHandler(BaseHandler):
@@ -467,6 +481,7 @@ app = webapp2.WSGIApplication([
     ('/_api/me/friends', FriendHandler),
     ('/_api/photo', PhotoHandler),
     ('/_api/tag', TagHandler),
+    ('/_api/tags', TagsHandler),
     ('/_dev/demo', DemoHandler),
     ('/logout', LogoutHandler),
     ('/', MainHandler)
