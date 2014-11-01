@@ -15,6 +15,15 @@
 		#main { 
 			min-width:350px;
 			margin: 0 auto;
+			transition:filter .3s;
+		}
+		
+		#main.blur {
+			-webkit-filter: blur(2px);
+			-moz-filter: blur(2px);
+			-o-filter: blur(2px);
+			-ms-filter: blur(2px);
+			filter: blur(2px);
 		}
 		
 		#loading { 
@@ -126,6 +135,23 @@
 		
 		.btn-align-top:hover .icon-align-top {
 			fill:#fff;
+		}
+		
+		.sidepanel-mask {
+			visibility:hidden;
+			position:fixed;
+			top:0;
+			bottom:0;
+			left:0;
+			right:0;
+			background-color:rgba(0, 0, 0, 0.5);
+			opacity:0;
+			transition: visibility 0.3s, opacity 0.3s ease-in-out ;
+		}
+		
+		.sidepanel-mask.show {
+			opacity:1;
+			visibility:visible;
 		}
 		
 		.sidepanel {
@@ -1416,44 +1442,7 @@
 			});
 			
 			me.view.on("click", ".event .btn-fb", function(e) {
-				core.api("/event/" + $(this).parents(".event").attr("key"), "GET", function(res) {
-					FB.login(function(response) {
-
-					}, {scope: 'publish_actions'});
-					/*var publish = {
-					  method: 'feed',
-					  message: res.description,
-					  //name: 'Connect',
-					  //caption: 'The Facebook Connect JavaScript SDK',
-					  //description: res.description,
-					  //link: 'http://fbrell.com/',
-					  actions: [
-					    { name: 'Those Days', link: 'https://those-days.appspot.com/' }
-					  ],
-					  user_message_prompt: 'Share your thoughts about RELL'
-					};
-					if (res.photo) {
-						publish.picture = res.photo.thumb_url + "1024";
-					}
-					FB.ui(publish, function(res) {
-					
-					});*/
-						FB.api(
-						    "/me/photos",
-						    "POST",
-						    {
-						        "url": res.photo.thumb_url + "1024",
-								"privacy" : { value:"SELF"},
-								"message" : res.description
-						    },
-						    function (response) {
-						      if (response && !response.error) {
-						        /* handle the result */
-						      }
-						    }
-						);
-				});
-				
+				core.events.trigger(me, "share_to_fb", $(this).parents(".event").attr("key"));
 				e.stopPropagation();
 			});
 		}
@@ -1845,6 +1834,11 @@
 		
 		function SidePanel(view) {
 			this.view = view;
+			var me = this;
+			this.mask = $(".sidepanel-mask").click(function() {
+				me.close();
+			});
+			this.mainView = $("#main");
 			this.view.on("mousewheel DOMMouseScroll", function(e) {
 				var scrollTo = null;
 
@@ -1861,25 +1855,25 @@
 			    }
 			});
 			this.messages = new Notifications(this.view.find(".notification"));
-			var me = this;
+			
 			this.alarm = new Alarm(function() {
 				me.messages.fetch();
-			});
-			var me = this;
-			this.view.find(".btn-notice-close").click(function() {
-				me.close();
 			});
 		}
 		
 		SidePanel.prototype.open = function() {
 			var me = this;
 			this.view.addClass("open");
+			this.mask.addClass("show");
+			this.mainView.addClass("blur");
 			this.alarm.cancel();
 			this.alarm.start(300);
 		};
 		
 		SidePanel.prototype.close = function() {
 			this.view.removeClass("open");
+			this.mask.removeClass("show");
+			this.mainView.removeClass("blur");
 			this.alarm.cancel();
 			core.events.trigger(this, "close");
 		};
@@ -1986,15 +1980,16 @@
 			me.btnPlace = me.view.find(".btn-place");
 			me.btnPeople = me.view.find(".btn-people");
 			me.btnTag = me.view.find(".btn-tag");
-			me.photo = me.view.find(".dlg-event-photo");
+			me.photoView = me.view.find(".dlg-event-photo");
 			me.placeView = me.view.find(".dlg-event-place");
 			me.placeNameView = me.placeView.find(".place-name");
 			me.people = me.view.find(".dlg-event-people");
 			me.tags = me.view.find(".dlg-event-tags");
 			me.filePhoto = me.btnPhoto.find(".file-photo");
 			me.mapimage = me.placeView.find("img");
-			me.image = me.photo.find("img");
-			me.progressbar = new ProgressBar(me.photo.find(".progressbar"));
+			me.image = me.photoView.find("img");
+			me.progressbar = new ProgressBar(me.photoView.find(".progressbar"));
+			me.btnPostToFb = me.view.find(".buttons-act .btn-fb");
 			me.btnPost = me.view.find(".buttons-act .btn-post");
 			me.loading = me.view.find(".dlg-event-loading");
 			me.tagPicker = new TagPicker(me.view.find(".menu-tags"));
@@ -2023,7 +2018,7 @@
 			
 			me.view.find(".dlg-body")
 			.on('dragenter', function(e) {
-				me.photo.show();
+				me.photoView.show();
 				e.stopPropagation();
 				e.preventDefault();
 			})
@@ -2045,9 +2040,7 @@
 				me.editable.show();
 				me.desccontent.hide();
 				me.descbuttons.show();
-				me.editable.html(me.descbody.html().replace(/(<[^>]*>)/g, function(match, p1, offset, str) {
-					return p1 == "<br>" ? "\n" : "";
-				}).replace(new RegExp("\n", "g"), "<br>"));
+				me.editable.html(me.convertAsEditable(me.descbody.html()));
 			});
 			
 			me.descbuttons.find(".btn-cancel").click(function() {
@@ -2085,9 +2078,28 @@
 				});
 			});
 			
+			me.btnPostToFb.click(function() {
+				var data = me.prepareData(["desc", "photo"])
+				FB.api(
+				    "/me/photos",
+				    "POST",
+				    {
+				        "url": me.photo.thumb_url + "1600",
+						"privacy" : { value:"SELF"},
+						"message" : data.desc
+				    },
+					function (response) {
+						if (response && !response.error) {
+						/* handle the result */
+							me.dismiss();
+						}
+					}
+				);
+			});
+			
 			me.um = new UploadManager({
 				onStart:function() {
-					me.photo.show();
+					me.photoView.show();
 					me.image.hide();
 					me.progressbar.view.show();
 					me.progressbar.setProgress(0);
@@ -2122,14 +2134,19 @@
 			});
 		}
 		
+		DialogEvent.prototype.convertAsEditable = function(text) {
+			return text.replace(/(<[^>]*>)/g, function(match, p1, offset, str) {
+								return p1 == "<br>" ? "\n" : "";
+							}).replace(new RegExp("\n", "g"), "<br>")
+		};
+		
 		DialogEvent.prototype.handleDropFile = function(e) {
 			var files = e.target.files || e.originalEvent.dataTransfer.files;
 			this.uploadPhotoFiles(files);
 		};
 		
-		DialogEvent.prototype.update = function(fields, cb) {
+		DialogEvent.prototype.prepareData = function(fields) {
 			var me = this;
-
 			var data = {};
 			for (var i in fields) {
 				var f = fields[i];
@@ -2144,7 +2161,7 @@
 					data['desc'] = desc;
 					break;
 				case 'photo':
-					data['pid'] = me.photo.attr("key");
+					data['pid'] = me.photoView.attr("key");
 					break;
 				case 'event_time':
 					data['event_time'] = me.datetime.format(core.DATETIME_FORMAT);
@@ -2175,6 +2192,13 @@
 					break;
 				}
 			}
+			return data;
+		};
+		
+		DialogEvent.prototype.update = function(fields, cb) {
+			var me = this;
+
+			var data = me.prepareData(fields);
 			
 			core.api("/event" + ("/" + (me.key || "")), "POST", data, function(res) {
 				if(res) {
@@ -2194,52 +2218,69 @@
 			me.key = null;
 			me.loc = null;
 			me.place = null;
+			me.photo = null;
 			me.editing = false;
 			me.descbody.html("");
-			me.photo.hide();
+			me.photoView.hide();
 			me.placeView.hide();
 			me.placePicker.hide();
 			me.setPeople([]);
 			me.setTags([]);
-			me.photo.attr("key", "");
+			me.btnPostToFb.hide();
+			me.photoView.attr("key", "");
 			me.view.find(".btn-icon").removeClass("active");
 			me.loading.hide();
 		};
 		
-		DialogEvent.prototype.setMode = function(key) {
+		DialogEvent.prototype.loadEvent = function(key) {
+			var me = this;
+			me.key = key;
+			me.loading.show();
+			core.api("/event/" + me.key, "GET", function(res) {
+				me.loading.hide();
+				if (res) {
+					me.descbody.html(res.description);
+					me.editable.html(me.convertAsEditable(me.descbody.html()));
+					me.setDate(strptime(res.event_time, core.timezone));
+					if (res.photo)
+						me.setPhoto(res.photo);
+					if (res.location) {
+						me.setLocation(res.location);
+					}
+					if (res.place) {
+						me.setPlace(res.place);
+					}
+					me.setPeople(res.people);
+					me.setTags(res.tags);
+				}
+			});
+		};
+		
+		DialogEvent.prototype.setMode = function(mode) {
 			var me = this;
 			me.reset();
-			if (key == 'new') {
+			if (mode == 'new') {
 				me.editable.html("");
 				me.editable.show();
 				me.descbuttons.hide();
 				me.desccontent.hide();
 				me.btnPost.show();
 				me.setDate(new Date());
-			} else {
-				me.key = key;
+			} else if (mode == 'edit') {
 				me.editable.hide();
 				me.desccontent.show();
 				me.descbuttons.hide();
 				me.btnPost.hide();
-				core.api("/event/" + key, "GET", function(res) {
-					if (res) {
-						me.descbody.html(res.description);
-						me.setDate(strptime(res.event_time, core.timezone));
-						if (res.photo)
-							me.setPhoto(res.photo);
-						if (res.location) {
-							me.setLocation(res.location);
-						}
-						if (res.place) {
-							me.setPlace(res.place);
-						}
-						me.setPeople(res.people);
-						me.setTags(res.tags);
-						me.editing = true;
-					}
-					me.loading.hide();
-				});
+				me.editing = true;
+			} else if (mode == 'fb') {
+				me.editable.show();
+				me.desccontent.hide();
+				me.descbuttons.hide();
+				me.btnPost.hide();
+				me.btnPostToFb.show();
+				FB.login(function(response) {
+					me.fb = true;
+				}, {scope: 'publish_actions'});
 			}
 		};
 		
@@ -2253,7 +2294,8 @@
 		DialogEvent.prototype.setPhoto = function(photo) {
 			var me = this;
 			me.btnPhoto.addClass("active");
-			me.photo.show();
+			me.photoView.show();
+			me.photo = photo;
 			var url = photo.thumb_url + "600";
 			if (me.loader.src === url) {
 				me.image.attr("src", url);
@@ -2263,7 +2305,7 @@
 				me.image.hide();
 			}
 			me.progressbar.view.hide();
-			me.photo.attr("key", photo.id);
+			me.photoView.attr("key", photo.id);
 		};
 		
 		DialogEvent.prototype.setPeople = function(ids) {
@@ -2558,7 +2600,8 @@
 			});
 			
 			core.events.bind(sidepanel.messages, "click_msg_event", function(id) {
-				dlgEvent.setMode(id);
+				dlgEvent.setMode('edit');
+				dlgEvent.loadEvent(id);
 				dlgEvent.show();
 			});
 			
@@ -2716,7 +2759,8 @@
 			
 			var events = new Events($("#events"), $("#empty"), $("#loading"), {
 				onItemClick:function(id) {
-					dlgEvent.setMode(id);
+					dlgEvent.setMode('edit');
+					dlgEvent.loadEvent(id);
 					dlgEvent.show();
 				}
 			});
@@ -2731,6 +2775,12 @@
 				searchbar.clearFilters();
 				searchbar.addUser(user);
 				searchbar.notifyFiltersChanged();
+			});
+			
+			core.events.bind(events, "share_to_fb", function(id) {
+				dlgEvent.setMode('fb');
+				dlgEvent.loadEvent(id);
+				dlgEvent.show();
 			});
 			
 			var alarmRelayout = new Alarm(function() {
@@ -2896,13 +2946,11 @@
 			</g>
 			</svg>
 		</div>
+		<div class="sidepanel-mask">
+		</div>
 		<div class="sidepanel">
 			<div class="header">
-				<span class="btn-icon btn-notice-close">
-					<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px"  viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
-					<path d="M51.311,51.315L71.426,31.13c0.361-0.363,0.361-0.951-0.004-1.313c-0.363-0.359-0.951-0.363-1.313,0.004  L50,50L29.891,29.821c-0.363-0.366-0.95-0.363-1.313-0.004c-0.365,0.363-0.365,0.95-0.004,1.313l20.115,20.185L28.574,71.501  c-0.361,0.363-0.361,0.951,0.004,1.313c0.181,0.18,0.417,0.27,0.655,0.27c0.238,0,0.477-0.091,0.658-0.274L50,52.631L70.109,72.81  c0.181,0.183,0.421,0.274,0.658,0.274c0.238,0,0.473-0.091,0.655-0.27c0.365-0.363,0.365-0.95,0.004-1.313L51.311,51.315z"/>
-					</svg>
-				</span>
+				
 			</div>
 			<div class="notification">
 				<div class="loading-f" style="display:none;">
@@ -3087,6 +3135,7 @@
 					</div>
 					<div class="buttons-act">
 						<button class="btn-post">Done</button>
+						<button class="btn-fb">Post to Facebook</button>
 					</div>
 				</div>
 				<div class="dlg-event-loading" style="display:none;"><img src="/static/images/loading.gif" /></div>

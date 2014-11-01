@@ -114,6 +114,17 @@ button {
 	display:inline-block;
 }
 
+.btn-fb {
+	background-color: #4c66a4;
+	color:#fff;
+}
+
+.btn-fb:hover {
+	-webkit-box-shadow: 0 0px 0 rgba(0,0,0,.1);
+	box-shadow: 0 0px 0 rgba(0,0,0,.1);
+	border: 1px solid transparent;
+}
+
 a.btn:active,
 button:active {
 	background-color: #e5e5e5;
