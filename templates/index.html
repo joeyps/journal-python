@@ -195,8 +195,9 @@
 			margin: 0 20px 8px;
 			overflow: hidden;
 			position: relative;
-			
-			padding:20px 20px;
+			padding:10px 20px;
+			height:80px;
+			box-sizing: border-box;
 		}
 		
 		.notification .msg.read {
@@ -220,6 +221,10 @@
 			height:40px;
 		}
 		
+		.notification .msg .target-photo {
+			float:right;
+		}
+		
 		.notification .msg .content {
 			margin-left:50px;
 		}
@@ -235,10 +240,45 @@
 			display:block;
 		}
 		
-		#events {
-			text-align:left;
+		.dlg .dlg-body {
+			background-color: #fff;
+			max-width: 500px;
+			min-width: 320px;
+			margin: 3% auto;
+			min-height: 100px;
+			padding: 20px;
+			border-radius: 4px;
+		}
+		
+		#dlg_tags .dlg-content:after {
+			clear:both;
+			content:" ";
+			display:block;
+		}
+		
+		#dlg_tags .dlg-content>div {
+			width:230px;
+			float:left;
+		}
+		
+		#dlg_tags .dlg-content .tag-event-count {
+			margin-left:40px;
+		}
+		
+		.dlg .dlg-header {
+			font-size:30px;
+			font-weight:bold;
+			color:rgba(0, 0, 0, 0.5);
+			padding:10px 0;
+		}
+		
+		#boxes {
 			margin: 40px auto;
 			position: relative;
+		}
+		
+		#events {
+
 		}
 		
 		.events:after {
@@ -304,9 +344,11 @@
 		
 		.box.user .menu-item:hover {
 			background-color: #f64c3f;
+			cursor:pointer;
 		}
 		
-		.box.user .menu-item a {
+		.box.user .menu-item a,
+		.box.user .menu-item span {
 			display: block;
 			vertical-align: middle;
 			line-height: 48px;
@@ -432,12 +474,55 @@
 			border-bottom-right-radius:6px;
 			overflow:hidden;
 			color:#fff;
+			white-space: nowrap;
 		}
 		
 		#events .event .event-footer .btn-icon {
 			display:inline-block;
-			line-height:48px;
+			height:48px;
 			padding:0 10px;
+			vertical-align:middle;
+		}
+		
+		#events .event .event-footer .btn-icon:hover {
+			background-color: #f64c3f;
+		}
+		
+		#events .event .event-footer .btn-icon .icon-share {
+			fill:#fff;
+			width: 32px;
+			height: 32px;
+			margin-top: 7px;
+		}
+		
+		#events .event .event-footer .btn-icon .icon-clear {
+			width: 24px;
+			height: 24px;
+			fill: #fff;
+			margin-top: 11px;
+		}
+		
+		#events .event .event-footer .btn-icon .icon-clear,
+		#events .event .event-footer .btn-icon .icon-share {
+			width:42px;
+		}
+		
+		
+		#events .event .event-footer .btn-fb {
+			background-color: #4c66a4;
+			margin-left: 200px;
+			transition: margin-left .3s ease-out;
+		}
+		
+		#events .event .event-footer .btn-fb.show {
+			margin-left: 0px;
+		}
+		
+		#events .event .event-footer .btn-icon .icon-fb {
+			fill:#fff;
+			width:36px;
+			height:36px;
+			margin-top: 5px;
 		}
 		
 		.events-place {
@@ -511,8 +596,8 @@
 			border: 1px solid #ccc;
 			color: #777;
 			border-radius: 9px;
-			padding: 2px 8px;
-			margin:2px;
+			padding: 3px 8px;
+			margin:3px;
 			display: inline-block;
 			cursor: pointer;
 		}
@@ -544,18 +629,17 @@
 			margin: 0 auto;
 		}
 		
-		.dlg .dlg-event-body {
+		#dlg_event .dlg-body {
 			max-width:500px;
 			min-width: 350px;
 			box-sizing: border-box;
 			margin: 30px auto;
 			padding:10px;
 			background-color:#fff;
-			border:1px solid #ccc;
 			position:relative;
 		}
 		
-		.dlg .dlg-event-body .dlg-event-desc {
+		#dlg_event .dlg-event-desc {
 			padding:10px 0;
 		}
 		
@@ -570,26 +654,26 @@
 			text-decoration:underline;
 		}
 		
-		.dlg .dlg-event-body .dlg-event-desc .dlg-btn-edit {
+		#dlg_event .dlg-event-desc .dlg-btn-edit {
 			display:none;
 		}
 		
-		.dlg .dlg-event-body .dlg-event-desc:hover .dlg-btn-edit {
+		#dlg_event .dlg-event-desc:hover .dlg-btn-edit {
 			display:inline-block;
 		}
 		
-		.dlg .dlg-event-body .dlg-buttons:after,
+		#dlg_event .dlg-buttons:after,
 		.dlg .dlg-event-people:after {
 			clear:both;
 			content:" ";
 			display:block;
 		}
 		
-		.dlg .dlg-event-body .buttons-tools {
+		#dlg_event .buttons-tools {
 			float:left;
 		}
 		
-		.dlg .dlg-event-body .buttons-act {
+		#dlg_event .buttons-act {
 			text-align:right;
 		}
 		
@@ -618,29 +702,24 @@
 			opacity:1;
 		}
 		
-		.dlg .dlg-event-body .btn-icon svg {
-			display:inline-block;
-		}
-		
-		
-		.dlg .dlg-event-body .btn-icon .icon-photo {
+		#dlg_event .btn-icon .icon-photo {
 			width: 28px;
 			height: 28px;
 		}
 		
-		.dlg .dlg-event-body .btn-icon .icon-people {
+		#dlg_event .btn-icon .icon-people {
 			width: 24px;
 			height: 24px;
 			margin-top: 2px;
 			margin-left: 7px;
 		}
 		
-		.dlg .dlg-event-body .btn-icon .icon-marker {
+		#dlg_event .btn-icon .icon-marker {
 			width: 30px;
 			height: 30px;
 		}
 		
-		.dlg .dlg-event-body .btn-icon .icon-tag {
+		#dlg_event .btn-icon .icon-tag {
 			width: 20px;
 			height: 20px;
 			padding-top: 5px;
@@ -708,7 +787,7 @@
 			border-radius:2px;
 		}
 		
-		.dlg .dlg-event-body .progressbar {
+		#dlg_event .progressbar {
 			display:inline-block;
 			position: absolute;
 			top:50%;
@@ -716,7 +795,7 @@
 			right: 30px;
 		}
 		
-		.dlg .dlg-event-body .dlg-event-loading {
+		#dlg_event .dlg-event-loading {
 			position:absolute;
 			top:50%;
 			left:0;
@@ -1304,6 +1383,7 @@
 			me.view = view;
 			me.empty = empty;
 			me.loading = loading;
+			me.userView = me.view.parent().find(".box.user");
 			me.years = {};
 			me.view.on("click", ".event", function() {
 				if(me.opts.onItemClick) {
@@ -1318,6 +1398,62 @@
 			
 			me.view.on("click", ".event .owner", function(e) {
 				core.events.trigger(me, "click_user", $(this).attr("key"));
+				e.stopPropagation();
+			});
+			
+			me.view.on("click", ".event .btn-share", function(e) {
+				$(this).parent().find(".btn-cancel").show();
+				$(this).parent().find(".btn-fb").addClass("show");
+				$(this).hide();
+				e.stopPropagation();
+			});
+			
+			me.view.on("click", ".event .btn-cancel", function(e) {
+				$(this).parent().find(".btn-share").show();
+				$(this).parent().find(".btn-fb").removeClass("show");
+				$(this).hide();
+				e.stopPropagation();
+			});
+			
+			me.view.on("click", ".event .btn-fb", function(e) {
+				core.api("/event/" + $(this).parents(".event").attr("key"), "GET", function(res) {
+					FB.login(function(response) {
+
+					}, {scope: 'publish_actions'});
+					/*var publish = {
+					  method: 'feed',
+					  message: res.description,
+					  //name: 'Connect',
+					  //caption: 'The Facebook Connect JavaScript SDK',
+					  //description: res.description,
+					  //link: 'http://fbrell.com/',
+					  actions: [
+					    { name: 'Those Days', link: 'https://those-days.appspot.com/' }
+					  ],
+					  user_message_prompt: 'Share your thoughts about RELL'
+					};
+					if (res.photo) {
+						publish.picture = res.photo.thumb_url + "1024";
+					}
+					FB.ui(publish, function(res) {
+					
+					});*/
+						FB.api(
+						    "/me/photos",
+						    "POST",
+						    {
+						        "url": res.photo.thumb_url + "1024",
+								"privacy" : { value:"SELF"},
+								"message" : res.description
+						    },
+						    function (response) {
+						      if (response && !response.error) {
+						        /* handle the result */
+						      }
+						    }
+						);
+				});
+				
 				e.stopPropagation();
 			});
 		}
@@ -1415,7 +1551,11 @@
 						"<div class='labels'><span class='label' key='" + e.tags[0] + "'>" + e.tags[0] + "</span></div></div>");
 			}
 			
-			eventView.append("<div class='event-footer'><span class='btn-icon'>Share</span></div>");
+			eventView.append("<div class='event-footer'>" + 
+								"<span class='btn-icon btn-share'>" + assets.svg.share + "</span>" + 
+								"<span class='btn-icon btn-cancel' style='display:none;'>" + assets.svg.clear + "</span>" + 
+								"<span class='btn-icon btn-fb'>" + assets.svg.facebook + "</span>" + 
+								"</div>");
 				
 			return eventView;
 		};
@@ -1424,8 +1564,8 @@
 			var me = this;
 			if (!me.events)
 				return;
-			var hasUserProfile = true;
-			var windowWidth = me.view.parent().width();
+			var hasUserProfile = !(me.filters && me.filters.length > 0);
+			var windowWidth = $(window).width();
 			var gapWidth = 30;
 			var gapHeight = 30;
 			var eventWidth = 255;
@@ -1433,21 +1573,15 @@
 			var lastY = [];
 			for (var i = 0; i < spanX; i++)
 				lastY.push(0);
-			me.view.css({ width:(eventWidth*spanX + gapWidth*(spanX - 1)) + "px"});
+			me.view.parent().css({ width:(eventWidth*spanX + gapWidth*(spanX - 1)) + "px"});
 			
 			if (hasUserProfile) {
-				var userView = me.view.find(".box.user");
+				me.userView.show();
 				var user = core.user;
-				if (userView.length == 0) {
-					userView = $("<div class='box user'>" + 
-								"<div class='portrait'><img src='" + user.profile_picture + "' /></div></div>").appendTo(me.view);
-					userView.append("<div class='profile'><h1>" + user.name + "</h1></div>");
-					userView.append("<div class='menu-item'><a href='/'>FRIENDS</a></div>");
-					userView.append("<div class='menu-item'><a href='/'>TAGS</a></div>");
-					userView.append("<div class='menu-item'><a href='/logout'>SIGN OUT</a></div>");
-				}
-				userView.css( {top:"0px", left:"0px" } );
-				lastY[0] = userView.height() + gapHeight;
+				me.userView.css( {top:"0px", left:"0px" } );
+				lastY[0] = me.userView.height() + gapHeight;
+			} else {
+				me.userView.hide();
 			}
 			
 			me.events.each(function(i) {
@@ -1478,6 +1612,8 @@
 		
 		Events.prototype.fetch = function(filters) {
 			var me = this;
+			me.userView.hide();
+			me.filters = filters;
 			me.clear();
 			me.loading.show();
 			var api = "/events";
@@ -1660,15 +1796,27 @@
 							}
 						}
 						var msgView = null;
+						var msgViewHeight = 80;
+						var msgViewPadding = 10;
 						if (msg.msg_type == 2000004 || msg.msg_type == 2000005) {
 							var sender = core.Friend.users[msg.user.id];
 							msgView = $("<div class='msg event' key='" + msg.id + "' target='" + msg.target.id + "'>" + 
-											"<img class='sender-profile-picture' src=" + sender.profile_picture + " />" +
-											"<div class='content'>" +
-											"<div>" + msg.message_str + "</div>" + 
-											"<div class='time txt2nd'>" + created_time.format(core.TIME12_FORMAT) + "</div>" + 
-											"</div>" +
+											"<img class='sender-profile-picture' src='" + sender.profile_picture + "' />" +
 											"</div>");
+							var imgWidth = 0;
+							if (msg.target.photo) {
+								var imgView = $("<img class='target-photo' src='" + 
+												msg.target.photo.thumb_url + "200' />").appendTo(msgView);
+								var h = msgViewHeight - (msgViewPadding*2);
+								var w = h * (1.0 * msg.target.photo.width/msg.target.photo.height);
+								imgView.css({width:w+"px", height:h+"px"});
+								imgWidth = w;
+							}
+							var contentView = $("<div class='content'>" +
+								"<div>" + msg.message_str + "</div>" + 
+								"<div class='time txt2nd'>" + created_time.format(core.TIME12_FORMAT) + "</div>" + 
+								"</div>").appendTo(msgView);
+							contentView.css({"margin-right":imgWidth+"px"});
 							if (msg.read) {
 								msgView.addClass("read");
 							}
@@ -1783,6 +1931,46 @@
 			me.progress.css({ width:value + "%" });
 		};
 		
+		function TagsDialog(view) {
+			this.view = view;
+			this.content = view.find(".dlg-content");
+		}
+		
+		TagsDialog.prototype.fetch = function() {
+			var me = this;
+			core.api("/tags", "GET", function(res) {
+				if (res) {
+					me.content.html("");
+					for (var i in res) {
+						var tag = res[i];
+						me.content.append("<div><span class='tag' key='" + tag.name + "'>" + 
+								tag.name + "<span class='tag-event-count'>" + tag.count +"</span></span></div>");
+					}
+				}
+			});
+		};
+		
+		TagsDialog.prototype.show = function() {
+			this.view.show();
+			this.fetch();
+		};
+		
+		TagsDialog.prototype.hide = function() {
+			this.view.hide();
+		};
+		
+		function FriendsDialog(view) {
+			this.view = view;
+		}
+		
+		FriendsDialog.prototype.show = function() {
+			this.view.show();
+		};
+		
+		FriendsDialog.prototype.hide = function() {
+			this.view.hide();
+		};
+		
 		function DialogEvent(view, opts) {
 			var me = this;
 			me.opts = opts;
@@ -1833,9 +2021,7 @@
 				me.dismiss();
 			});
 			
-			me.view.find(".dlg-event-body").click(function(e) {
-				e.stopPropagation();
-			})
+			me.view.find(".dlg-body")
 			.on('dragenter', function(e) {
 				me.photo.show();
 				e.stopPropagation();
@@ -2355,6 +2541,16 @@
 				e.stopPropagation();
 			});
 			
+			var tagsDialog = new TagsDialog($("#dlg_tags"));
+			var btnTags = $(".box.user .btn-tags").click(function() {
+				tagsDialog.show();
+			});
+			
+			var tagsFriends = new TagsDialog($("#dlg_friends"));
+			var btnFriends = $(".box.user .btn-friends").click(function() {
+				tagsFriends.show();
+			});
+			
 			var sidepanel = new SidePanel($(".sidepanel"));
 			var btnNotice = $(".btn-notice");
 			btnNotice.click(function() {
@@ -2589,6 +2785,8 @@
 			    }
 			}).click(function() {
 				$(this).hide();
+			}).find(".dlg-body").click(function(e) {
+				e.stopPropagation();
 			});
 			
 			$(".btn-map").click(function() {
@@ -2608,7 +2806,26 @@
 			$("#map_canvas").click(function(e) {
 				e.stopPropagation();
 			});
+			
 		});
+		
+		
+		window.fbAsyncInit = function() {
+		        FB.init({
+		          appId      : '{{ facebook_app_id }}',
+		          xfbml      : true,
+		          version    : 'v2.1'
+		        });
+		      };
+
+		      (function(d, s, id){
+		         var js, fjs = d.getElementsByTagName(s)[0];
+		         if (d.getElementById(id)) {return;}
+		         js = d.createElement(s); js.id = id;
+		         js.src = "//connect.facebook.net/en_US/sdk.js";
+		         fjs.parentNode.insertBefore(js, fjs);
+		       }(document, 'script', 'facebook-jssdk'));
+			   
 		</script>
     </head>
     <body>
@@ -2643,7 +2860,16 @@
 					</span>
 				</div>
 			</div>
-			<div id="events"></div>
+			<div id="boxes">
+				<div class='box user' style="top:0px; left:0px; display:none;">
+					<div class='portrait'><img src='{{ user.profile_picture }}' /></div>
+					<div class='profile'><h1>{{ user.name }}</h1></div>
+					<div class='menu-item'><span class='btn-friends'>FRIENDS</span></div>
+					<div class='menu-item'><span class='btn-tags'>TAGS</span></div>
+					<div class='menu-item'><a href='/logout'>SIGN OUT</a></div>
+				</div>
+				<div id="events"></div>
+			</div>
 			<div id="empty" style="display:none;">
 				There is no any event yet. <br /><button class="btn-new btn-post">New Event</button>
 			</div>
@@ -2715,8 +2941,26 @@
 				<span class="droparea-info">Drop here</span>
 			</div>
 		</div>
+		<div id="dlg_tags" class="dlg" style="display:none;">
+			<div class="dlg-body">
+				<div class="dlg-header">
+					Tags
+				</div>
+				<div class="dlg-content">
+				</div>
+			</div>
+		</div>
+		<div id="dlg_friends" class="dlg" style="display:none;">
+			<div class="dlg-body">
+				<div class="dlg-header">
+					Friends
+				</div>
+				<div class="dlg-content">
+				</div>
+			</div>
+		</div>
 		<div id="dlg_event" class="dlg" style="display:none;">
-			<div class="dlg-event-body">
+			<div class="dlg-body">
 				<div class="dlg-event-header">
 					<span class="btn-date"></span>
 					<span class="btn-time"></span>

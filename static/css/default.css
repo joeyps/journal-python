@@ -109,6 +109,11 @@ button {
 	display: inline-block;
 }
 
+.btn-icon {
+	cursor:pointer;
+	display:inline-block;
+}
+
 a.btn:active,
 button:active {
 	background-color: #e5e5e5;
