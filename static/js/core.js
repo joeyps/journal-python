@@ -98,10 +98,15 @@ core.api = function() {
 	if(params != null) {
 		opts['data'] = { data:JSON.stringify(params) };
 	}
-
 	var that = this;
-	$.ajax(opts).done(function(response) {
-		var res = response ? JSON.parse(response) : null;
+	$.ajax(opts).done(function(response, status, xhr) {
+		var contentType = xhr.getResponseHeader("content-type") || "";
+		var res = null;
+		if (contentType.indexOf("application/json") != -1) {
+			res = response;
+		} else {
+			res = response ? JSON.parse(response) : null;
+		}
 		if(callback) {
 			callback(res);
 		}

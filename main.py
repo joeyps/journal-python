@@ -39,6 +39,8 @@ from jinja2.environment import Environment
 env = Environment()
 env.loader = FileSystemLoader('./templates')
 
+HOST = "https://those-days.appspot.com"
+API_URL = HOST + "/_api"
 FACEBOOK_APP_ID = "276572495886627"
 FACEBOOK_APP_SECRET = "4a2250bfce16f1a9c110038ace5f464f"
 
@@ -64,6 +66,12 @@ class BaseHandler(webapp2.RequestHandler):
         if self.session.get("user"):
             # User is logged in
             return self.session.get("user")
+        elif "Authorization" in self.request.headers:
+            access_token = self.request.headers["Authorization"].replace("access_token=", "")
+            auth_token = AuthToken.get_by_token(access_token)
+            if auth_token:
+                self.store_user_to_session(auth_token.user.get())
+                return self.session.get("user")
         else:
             # Either used just logged in or just saw the first page
             # We'll see here
@@ -99,16 +107,20 @@ class BaseHandler(webapp2.RequestHandler):
                     user.profile_picture=profile_photo['data']['url']
                     user.put()
                 # User is now logged in
-                self.session["user"] = dict(
-                    name=user.name,
-                    profile_picture=user.profile_picture,
-                    id=user.key.integer_id(),
-                    oauth_uid=user.oauth_uid,
-                    #access_token=user.access_token,
-                    timezone=user.timezone
-                )
+                self.store_user_to_session(user)
                 return self.session.get("user")
         return None
+    
+    def store_user_to_session(self, user):
+        self.session["user"] = dict(
+            name=user.name,
+            profile_picture=user.profile_picture,
+            id=user.key.integer_id(),
+            oauth_uid=user.oauth_uid,
+            #access_token=user.access_token,
+            timezone=user.timezone
+        )
+        return self.session.get("user")
         
     @property
     def template_values(self):
@@ -143,6 +155,7 @@ class BaseHandler(webapp2.RequestHandler):
         return self.session_store.get_session()
         
     def send_json(self, obj):
+        self.response.headers['Content-Type'] = 'application/json'
         self.response.out.write(json.dumps(obj))
 
 class LogoutHandler(BaseHandler):
@@ -151,6 +164,36 @@ class LogoutHandler(BaseHandler):
             self.session['user'] = None
 
         self.redirect('/')
+
+class SyncManifestHandler(BaseHandler):
+    def get(self):
+        if self.current_user:
+            return self.send_json({
+                "format" : "manifest-json-v1",
+                "data_files" : [{"type":"events", "data": API_URL + "/events"}]
+            })
+        self.send_json(False)
+        
+class AuthFbHandler(BaseHandler):
+    def get(self):
+        access_token = self.request.get("access_token")
+        graph = facebook.GraphAPI(self.request.get("access_token"))
+        profile = graph.get_object("me")
+        #TODO create user from mobile
+        if "id" in profile:
+            results = User.query().filter(User.oauth_provider==User.OAUTH_FACEBOOK).filter(User.oauth_uid==profile["id"]).fetch(keys_only=True)
+            if len(results) > 0:
+                user_key = results[0]
+                auth_token = AuthToken.add_or_update_token(user_key, AuthToken.TOKEN_TYPE["auth"], access_token)
+                self.send_json({"token":auth_token.token})
+                return
+
+class UserHandler(BaseHandler):
+    def get(self):
+        current_user = self.current_user
+        if current_user:
+            return self.send_json(current_user)
+        self.send_json(False)
 
 class MainHandler(BaseHandler):
     def get(self):
@@ -479,10 +522,13 @@ app = webapp2.WSGIApplication([
     ('/_api/me/messages/count', MessagesCountHandler),
     ('/_api/me/messages/seen', MessagesSeenHandler),
     ('/_api/me/friends', FriendHandler),
+    ('/_api/me', UserHandler),
     ('/_api/photo', PhotoHandler),
     ('/_api/tag', TagHandler),
     ('/_api/tags', TagsHandler),
     ('/_dev/demo', DemoHandler),
+    ('/_auth/fb', AuthFbHandler),
+    ('/_sync/manifest', SyncManifestHandler),
     ('/logout', LogoutHandler),
     ('/', MainHandler)
 ], debug=True

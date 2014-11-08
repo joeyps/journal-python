@@ -193,6 +193,37 @@ class User(BaseModel):
                 oauth_uid=self.oauth_uid
                 )
         return d
+        
+class AuthToken(BaseModel):
+    TOKEN_TYPE = {
+        'auth' : 1000
+    }
+    
+    token = ndb.StringProperty(required=True)
+    token_type = ndb.IntegerProperty(required=True)
+    user = ndb.KeyProperty(kind=User, required=True)
+    client = ndb.StringProperty()
+    created_time = ndb.DateTimeProperty(auto_now_add=True)
+    
+    @staticmethod
+    def get_by_token(token):
+        results = AuthToken.query().filter(AuthToken.token==token).fetch(1)
+        if len(results) > 0:
+            return results[0]
+        return None
+    
+    @staticmethod
+    def add_or_update_token(user_key, token_type, token):
+        results = AuthToken.query().filter(AuthToken.user==user_key).filter(AuthToken.token_type==token_type).fetch(1)
+        auth_token = None
+        if len(results) > 0:
+            auth_token = results[0]
+            auth_token.token = token
+        else:
+            auth_token = AuthToken(user=user_key, token_type=token_type, token=token)
+        auth_token.put()
+        return auth_token
+        
 
 class Journey(BaseModel):
     title = ndb.StringProperty()
