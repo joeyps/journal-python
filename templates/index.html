@@ -2286,6 +2286,9 @@
 					}
 					me.setPeople(res.people);
 					me.setTags(res.tags);
+					if (me.mode == 'edit') {
+						me.editing = true;
+					}
 				}
 			});
 		};
@@ -2293,6 +2296,7 @@
 		DialogEvent.prototype.setMode = function(mode) {
 			var me = this;
 			me.reset();
+			me.mode = mode;
 			if (mode == 'new') {
 				me.editable.html("");
 				me.editable.show();
@@ -2305,7 +2309,6 @@
 				me.desccontent.show();
 				me.descbuttons.hide();
 				me.btnPost.hide();
-				me.editing = true;
 			} else if (mode == 'fb') {
 				me.editable.show();
 				me.desccontent.hide();
