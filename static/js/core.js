@@ -62,6 +62,23 @@ core = {
 	}
 };
 
+core.ajax = function(opts, done, fail) {
+	$.ajax(opts).done(function(response, status, xhr) {
+		var contentType = xhr.getResponseHeader("content-type") || "";
+		var res = null;
+		if (contentType.indexOf("application/json") != -1) {
+			res = response;
+		} else {
+			res = response ? JSON.parse(response) : null;
+		}
+		if(done) {
+			done(res);
+		}
+	}).fail(function(jqxhr, textStatus, errorThrown) {
+
+	});
+};
+
 core.api = function() {
 	if(arguments.length < 2) {
 		return;
@@ -99,20 +116,7 @@ core.api = function() {
 		opts['data'] = { data:JSON.stringify(params) };
 	}
 	var that = this;
-	$.ajax(opts).done(function(response, status, xhr) {
-		var contentType = xhr.getResponseHeader("content-type") || "";
-		var res = null;
-		if (contentType.indexOf("application/json") != -1) {
-			res = response;
-		} else {
-			res = response ? JSON.parse(response) : null;
-		}
-		if(callback) {
-			callback(res);
-		}
-	}).fail(function(jqxhr, textStatus, errorThrown) {
-
-	});
+	core.ajax(opts, callback);
 };
 
 function Jourmap() {
@@ -402,7 +406,7 @@ UploadManager.prototype.start = function(files, to) {
 	    else { 
             var formData = new FormData();
 			formData.append("files", file);
-            $.ajax({
+			var opts = {
                 url: to,  //server script to process data
                 type: 'POST',
                 xhr: function() {  // custom xhr
@@ -426,15 +430,13 @@ UploadManager.prototype.start = function(files, to) {
                 cache: false,
                 contentType: false,
                 processData: false
-            })
-			.done(function(response){ 
-				response = JSON.parse(response);
+            };
+			core.ajax(opts, function(response){ 
 				um.num_uploaded++;
 				um.progress(file, um.num_uploaded, um.files.length, (um.num_uploaded * 100.0 / um.total_size) * 100);
 				um.opts.uploaded(um.current, file, response);
 				next();
-			})
-			.fail(function(jqxhr, textStatus, errorThrown) { 
+			}, function(jqxhr, textStatus, errorThrown) { 
 				um.num_failed++;
 				next();
 			});

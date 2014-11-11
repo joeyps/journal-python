@@ -31,6 +31,7 @@ import models
 from models import *
 import utils
 import searchengine as se
+import timezone as tz
 
 from jinja2 import Template
 from jinja2 import FileSystemLoader
@@ -41,6 +42,7 @@ env.loader = FileSystemLoader('./templates')
 
 HOST = "https://those-days.appspot.com"
 API_URL = HOST + "/_api"
+SYNC_URL = HOST + "/_sync"
 FACEBOOK_APP_ID = "276572495886627"
 FACEBOOK_APP_SECRET = "4a2250bfce16f1a9c110038ace5f464f"
 
@@ -168,9 +170,13 @@ class LogoutHandler(BaseHandler):
 class SyncManifestHandler(BaseHandler):
     def get(self):
         if self.current_user:
+            self.response.headers['Last-Modified'] = datetime.now(tz.utc).strftime(models.TIMESTAMP_FORMAT)
             return self.send_json({
                 "format" : "manifest-json-v1",
-                "data_files" : [{"type":"events", "data": API_URL + "/events"}]
+                "data_files" : [{"type":"events", "data": SYNC_URL + "/events"},
+                                {"type":"tags", "data": SYNC_URL + "/tags"},
+                                {"type":"messages", "data": SYNC_URL + "/messages"},
+                                {"type":"friends", "data": SYNC_URL + "/friends"}]
             })
         self.send_json(False)
         
@@ -487,6 +493,55 @@ class MessageReadHandler(BaseHandler):
                 n.mark_as_read()
             return self.send_json(True)
         self.send_json(False)
+        
+class SyncEventsHandler(BaseHandler):
+    def get(self):
+        current_user = self.current_user
+        if current_user and "If-Modified-Since" in self.request.headers and "Last-Modified" in self.request.headers:
+            since = datetime.strptime(self.request.headers["If-Modified-Since"], models.TIMESTAMP_FORMAT)
+            to = datetime.strptime(self.request.headers["Last-Modified"], models.TIMESTAMP_FORMAT)
+            q = Event.query(Event.who_can_see == User.parse_key(current_user['id']))
+            q = q.filter(Event.updated_time >= since)
+            q = q.filter(Event.updated_time < to)
+            q = q.order(Event.updated_time)
+            return self.send_json([r.to_dict() for r in q])
+        self.send_json(False)
+
+class SyncTagsHandler(BaseHandler):
+    def get(self):
+        current_user = self.current_user
+        if current_user and "If-Modified-Since" in self.request.headers and "Last-Modified" in self.request.headers:
+            since = datetime.strptime(self.request.headers["If-Modified-Since"], models.TIMESTAMP_FORMAT)
+            to = datetime.strptime(self.request.headers["Last-Modified"], models.TIMESTAMP_FORMAT)
+            results = Tag.query(ancestor=User.parse_key(current_user['id'])).fetch(1)
+            if len(results) > 0:
+                return self.send_json(results[0].to_dict())
+        self.send_json(False)
+        
+class SyncMessagesHandler(BaseHandler):
+    def get(self):
+        current_user = self.current_user
+        if current_user and "If-Modified-Since" in self.request.headers and "Last-Modified" in self.request.headers:
+            since = datetime.strptime(self.request.headers["If-Modified-Since"], models.TIMESTAMP_FORMAT)
+            to = datetime.strptime(self.request.headers["Last-Modified"], models.TIMESTAMP_FORMAT)
+            q = Notification.query(ancestor=User.parse_key(current_user['id']))
+            q = q.filter(Event.updated_time >= since)
+            q = q.filter(Event.updated_time < to)
+            q = q.order(Event.updated_time)
+            return self.send_json([r.to_dict() for r in q])
+        self.send_json(False)
+        
+class SyncFriendsHandler(BaseHandler):
+    def get(self):
+        current_user = self.current_user
+        if current_user and "If-Modified-Since" in self.request.headers and "Last-Modified" in self.request.headers:
+            user = User.from_id(self.current_user['id'])
+            f = user.get_friends()
+            friends = []
+            for s in f.suggestions:
+                friends.append(s.get().to_dict())
+            return self.send_json(friends)
+        self.send_json(False)
 
 class DemoHandler(BaseHandler):
     def get(self):
@@ -528,6 +583,10 @@ app = webapp2.WSGIApplication([
     ('/_api/tags', TagsHandler),
     ('/_dev/demo', DemoHandler),
     ('/_auth/fb', AuthFbHandler),
+    ('/_sync/events', SyncEventsHandler),
+    ('/_sync/tags', SyncTagsHandler),
+    ('/_sync/messages', SyncMessagesHandler),
+    ('/_sync/friends', SyncFriendsHandler),
     ('/_sync/manifest', SyncManifestHandler),
     ('/logout', LogoutHandler),
     ('/', MainHandler)

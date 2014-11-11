@@ -36,6 +36,11 @@ indexes:
   - name: event_time
     direction: desc
 
+- kind: Event
+  properties:
+  - name: who_can_see
+  - name: updated_time
+
 - kind: Notification
   ancestor: yes
   properties:
@@ -60,3 +65,8 @@ indexes:
   - name: seen
   - name: created_time
     direction: desc
+
+- kind: Notification
+  ancestor: yes
+  properties:
+  - name: updated_time

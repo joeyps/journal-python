@@ -10,6 +10,7 @@ from google.appengine.datastore.datastore_query import Cursor
 
 DATE_FORMAT = "%Y-%m-%d"
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+TIMESTAMP_FORMAT = "%a, %d %b %Y %H:%M:%S %Z"
 
 PERMISSIONS = {
     'private':1000001,
