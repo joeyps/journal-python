@@ -354,9 +354,18 @@
 			width:255px;
 		}
 		
-		.box.user {
+		.box.empty {
+			background-color:#ffffff;
+			padding:20px 20px;
+			font-size:30px;
+			color:#ccc;
+		}
+		
+		.box.user,
+		.box.empty {
 			border-radius:6px;
 			overflow:hidden;
+			box-sizing:border-box;
 		}
 		
 		.box.user .portrait {
@@ -1420,14 +1429,14 @@
 			core.events.trigger(this, "filter_change");
 		};
 		
-		function Events(view, empty, loading, opts) {
+		function Events(view, loading, opts) {
 			var me  = this;
 			me.viewWidth = 255;
 			me.opts = opts;
 			me.view = view;
-			me.empty = empty;
 			me.loading = loading;
 			me.userView = me.view.parent().find(".box.user");
+			me.emptyView = me.view.parent().find(".box.empty");
 			me.years = {};
 			me.view.on("click", ".event", function() {
 				if(me.opts.onItemClick) {
@@ -1572,6 +1581,7 @@
 			if (!me.events)
 				return;
 			var hasUserProfile = !(me.filters && me.filters.length > 0);
+			var isEmpty = hasUserProfile && me.events.length == 0;
 			var windowWidth = $(window).width();
 			var gapWidth = 30;
 			var gapHeight = 30;
@@ -1582,17 +1592,30 @@
 				lastY.push(0);
 			me.view.parent().css({ width:(eventWidth*spanX + gapWidth*(spanX - 1)) + "px"});
 			
+			var initBoxes = [];
 			if (hasUserProfile) {
 				me.userView.show();
-				var user = core.user;
-				me.userView.css( {top:"0px", left:"0px" } );
-				lastY[0] = me.userView.height() + gapHeight;
+				initBoxes.push(me.userView);
 			} else {
 				me.userView.hide();
 			}
 			
+			if (isEmpty) {
+				me.emptyView.show();
+				initBoxes.push(me.emptyView);
+			} else {
+				me.emptyView.hide();
+			}
+			
+			for (var i in initBoxes) {
+				var cellX = i % spanX;
+				var e = initBoxes[i];
+				e.css({ top:lastY[cellX] + "px", left:(cellX * (eventWidth + gapWidth)) + "px" });
+				lastY[cellX] = lastY[cellX] + e.height() + gapHeight;
+			}
+			
 			me.events.each(function(i) {
-				if (hasUserProfile) i += 1;
+				i += initBoxes.length;
 				var cellX = i % spanX;
 				var e = $(this);
 				e.css({ top:lastY[cellX] + "px", left:(cellX * (eventWidth + gapWidth)) + "px" });
@@ -1603,12 +1626,7 @@
 		Events.prototype.notifyDataChanged = function() {
 			var me = this;
 			me.events = me.view.find(".event");
-			if (me.events.length > 0) {
-				me.empty.hide();
-				me.relayout();
-			} else {
-				me.empty.show();
-			}
+			me.relayout();
 		};
 		
 		Events.prototype.clear = function() {
@@ -2794,7 +2812,7 @@
 				});
 			}
 			
-			var events = new Events($("#events"), $("#empty"), $("#loading"), {
+			var events = new Events($("#events"), $("#loading"), {
 				onItemClick:function(id) {
 					dlgEvent.setMode('edit');
 					dlgEvent.loadEvent(id);
@@ -2919,7 +2937,6 @@
 		<div id="main">
 			<div class="buttons-main">
 				<div class="buttons-right">
-					<button class="btn-map">Map</button>
 					<button class="btn-new btn-post">New Event</button>
 					<span class="btn-icon btn-notice">
 						<span>
@@ -2951,14 +2968,16 @@
 				<div class='box user' style="top:0px; left:0px; display:none;">
 					<div class='portrait'><img src='{{ user.profile_picture }}' /></div>
 					<div class='profile'><h1>{{ user.name }}</h1></div>
+					<div class='menu-item'><span class='btn-map'>MAP</span></div>
 					<div class='menu-item'><span class='btn-friends'>FRIENDS</span></div>
 					<div class='menu-item'><span class='btn-tags'>TAGS</span></div>
 					<div class='menu-item'><a href='/logout'>SIGN OUT</a></div>
 				</div>
+				<div class='box empty' style="top:0px; left:0px; display:none;">
+					<div class="tip">DROP PHOTO HERE TO START YOUR STORY,<br/> or click</div>
+					<div><button class="btn-new btn-post">New Event</button></div>
+				</div>
 				<div id="events"></div>
-			</div>
-			<div id="empty" style="display:none;">
-				There is no any event yet. <br /><button class="btn-new btn-post">New Event</button>
 			</div>
 			<div id="loading" style="display:none;">
 				<div class="loading">

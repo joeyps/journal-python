@@ -31,15 +31,15 @@ indexes:
     direction: desc
 
 - kind: Event
+  properties:
+  - name: who_can_see
+  - name: updated_time
+
+- kind: Event
   ancestor: yes
   properties:
   - name: event_time
     direction: desc
-
-- kind: Event
-  properties:
-  - name: who_can_see
-  - name: updated_time
 
 - kind: Notification
   ancestor: yes
