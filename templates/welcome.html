@@ -24,6 +24,7 @@
 				margin:0;
 				background: #2c4762 url("/static/images/cover2.jpg") center top no-repeat;
 				background-size: cover;
+				position:relative;
 			}
 
 			#welcome-text {
@@ -40,7 +41,7 @@
 			
 			#welcome-text h1 {
 				font-size:5em;
-				margin:10px 0px;
+				margin:0;
 				font-weight:100;
 				font-family:"bookman bold";
 			}
@@ -99,6 +100,22 @@
 				font-size: 14px;
 				font-weight: bold;
 				font-family: 'Roboto',arial,sans-serif;
+			}
+			
+			.footer {
+				position:absolute;
+				bottom:0px;
+				padding:25px 20px;
+				color:#ffffff;
+			}
+			
+			.footer span+span {
+				margin-left:20px;
+			}
+			
+			.footer a {
+				color:#ffffff;
+				text-decoration:none;
 			}
 		</style>
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
@@ -211,6 +228,9 @@
 				    </div>
 				</div>
 			</div>
+		</div>
+		<div class="footer">
+			<span>&copy; 2014 Those Days</span><span><a href="/policy/privacy">Privacy</a></span>
 		</div>
     </body> 
 </html>

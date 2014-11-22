@@ -214,6 +214,14 @@ class MainHandler(BaseHandler):
         template_values = dict(list(template_values.items()) + list(self.template_values.items()))    
         self.response.out.write(t.render(template_values))
         
+class PrivacyHandler(BaseHandler):
+    def get(self):
+        template_values = {}
+        t = env.get_template('privacy.html')
+        
+        template_values = dict(list(template_values.items()) + list(self.template_values.items()))    
+        self.response.out.write(t.render(template_values))
+        
 class EventHandler(BaseHandler):
     def get(self, id):
         user = self.current_user
@@ -589,6 +597,7 @@ app = webapp2.WSGIApplication([
     ('/_sync/friends', SyncFriendsHandler),
     ('/_sync/manifest', SyncManifestHandler),
     ('/logout', LogoutHandler),
+    ('/policy/privacy', PrivacyHandler),
     ('/', MainHandler)
 ], debug=True
 , config=config)
