@@ -373,13 +373,19 @@ class PhotoHandler(BaseHandler):
         
     @staticmethod
     def apply_exif_for_photo(photo, exif):
+        str_datetime = None
+        original_time = None
         if 'DateTimeDigitized' in exif:
             str_datetime = exif['DateTimeDigitized']
+        elif 'DateTime' in exif:
+            str_datetime = exif['DateTime']
+        
+        if str_datetime:    
             if "/" in str_datetime:
                 original_time = datetime.strptime(str_datetime, "%Y/%m/%d %H:%M:%S")
-            else:
-                original_time = datetime.strptime(str_datetime, "%Y:%m:%d %H:%M:%S")
-        else:
+            else: # :
+                original_time = datetime.strptime(str_datetime, "%Y:%m:%d %H:%M:%S")        
+        if not original_time:
             original_time = datetime.today()
         with_gps_tag = 'GPSDateStamp' in exif and 'GPSTimeStamp' in exif
         utc = None
