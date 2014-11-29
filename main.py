@@ -288,6 +288,19 @@ class EventHandler(BaseHandler):
             return self.send_json(e.to_dict())
         self.send_json(False)
         
+    def delete(self, id):
+        user = self.current_user
+        if user and id:
+            e = Event.from_id(id)
+            if e.is_owner(user['id']):
+                if e.photo:
+                    blobstore.delete(e.photo.get().blob)
+                    e.photo.delete()
+                e.key.delete()
+                self.send_json(True)
+                return
+        self.error(403)
+        
 class EventsHandler(BaseHandler):
     def get(self):
         user = self.current_user
