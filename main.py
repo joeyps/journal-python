@@ -252,7 +252,7 @@ class EventHandler(BaseHandler):
                 e = Event(parent=owner)
                 is_new = True
             if 'desc' in data:
-                e.description = models.escape(data['desc'], link=True, br=True)
+                e.description = models.escape(data['desc'], link=True)
             if 'pid' in data:
                 if e.photo:
                     old_photo = e.photo.get()
@@ -296,6 +296,7 @@ class EventHandler(BaseHandler):
                 if e.photo:
                     blobstore.delete(e.photo.get().blob)
                     e.photo.delete()
+                #Notification.query(Notification.target == e.key)
                 e.key.delete()
                 self.send_json(True)
                 return
@@ -594,6 +595,17 @@ class DemoHandler(BaseHandler):
             q = Event.query()
             for e in q:
                 Notification.post_multi([user.key], Notification.MESSAGES["event_tagged"], e.key.parent(), e.key)
+                
+class DbUpgradeHandler(BaseHandler):
+    def get(self):
+        results = Event.query().fetch(1000)
+        updated = []
+        for i in range(len(results)):
+            r = results[i]
+            if r.description:
+                r.description = r.description.replace("&nbsp;", " ").replace("<br />", "\n")
+                updated.append(r)
+        ndb.put_multi(updated)
 
 app = webapp2.WSGIApplication([
     ('/_api/event/([^/]+)?', EventHandler),
@@ -609,6 +621,7 @@ app = webapp2.WSGIApplication([
     ('/_api/tag', TagHandler),
     ('/_api/tags', TagsHandler),
     ('/_dev/demo', DemoHandler),
+    ('/_dev/dbupgrade', DbUpgradeHandler),
     ('/_auth/fb', AuthFbHandler),
     ('/_sync/events', SyncEventsHandler),
     ('/_sync/tags', SyncTagsHandler),

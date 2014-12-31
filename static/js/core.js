@@ -446,3 +446,42 @@ UploadManager.prototype.start = function(files, to) {
 	upload(um.files[um.current]);
 	
 };
+
+function escapePost(s) {
+	if (!s) return "";
+	return s.trim()
+			.replace(/<div>/g, "")
+			.replace(/(<br.*?>|<\/div>)/g, "\n")
+			.replace(/&nbsp;/g, " ")
+			.replace(/&gt;/g, ">")
+			.replace(/&lt;/g, "<")
+			.replace(/&quot;/g, "\"")
+			.replace(/(&apos;|&#39;)/g, "'")
+			.replace(/&amp;/g, "&");
+}
+
+function escapeEdit(s) {
+	if (!s) return "";
+	return s.replace(/<a[^>]+>([^<]+)<\/a>/g, "$1");
+}
+
+function unescapePost(s) {
+	if (!s) return "";
+	return parseLink(s).replace(/\n/g, "<br>")
+				.replace(/\s\s/g, " &nbsp;");
+}
+
+function parseLink(s) {
+	if (!s) return "";
+    return s.replace(/((https?:\/\/|www\.)[^\s\n]+)/g, _handleLinkMatch);
+}
+
+function _handleLinkMatch(m, p1) {
+    var url = m;
+    var endAtComma = false;
+    if (url.slice(-1) == ",") {
+        endAtComma = true;
+		url = url.slice(0, url.length - 1);
+	}
+    return "<a target='_blank' href='"+ (url.indexOf('www') == 0?("http://" + url):url) + "'>" + url + "</a>" + (endAtComma ? "," : "");
+}

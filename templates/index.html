@@ -1541,7 +1541,7 @@
 								"<div class='day'>" + date.format("d") + "</div></div>")
 			}
 			
-			var descView = $("<div class='desc'><span>" + (e.description || "")  + "</span></div>").appendTo(eventView);
+			var descView = $("<div class='desc'><span>" + unescapePost(e.description)  + "</span></div>").appendTo(eventView);
 			var owner = null;
 			if (e.owner.id != core.user.id && e.photo) {
 				owner = core.Friend.users[e.owner.id];
@@ -2092,7 +2092,7 @@
 				me.editable.show();
 				me.desccontent.hide();
 				me.descbuttons.show();
-				me.editable.html(me.convertAsEditable(me.descbody.html()));
+				me.editable.html(escapeEdit(me.descbody.html()));
 			});
 			
 			me.descbuttons.find(".btn-cancel").click(function() {
@@ -2105,7 +2105,7 @@
 				me.update(["desc"], function(res) {
 					if(res) {
 						me.editable.hide();
-						me.descbody.html(res.description);
+						me.descbody.html(unescapePost(res.description));
 						me.desccontent.show();
 						me.descbuttons.hide();
 						if (me.opts.onEventEdited) {
@@ -2186,12 +2186,6 @@
 			});
 		}
 		
-		DialogEvent.prototype.convertAsEditable = function(text) {
-			return text.replace(/(<[^>]*>)/g, function(match, p1, offset, str) {
-								return p1 == "<br>" ? "\n" : "";
-							}).replace(new RegExp("\n", "g"), "<br>")
-		};
-		
 		DialogEvent.prototype.handleDropFile = function(e) {
 			var files = e.target.files || e.originalEvent.dataTransfer.files;
 			this.uploadPhotoFiles(files);
@@ -2204,12 +2198,7 @@
 				var f = fields[i];
 				switch(f) {
 				case 'desc':
-					var desc = me.editable.html().trim().replace(/<div>/g, "")
-												.replace(/(<br>|<\/div>)/g, "\n")
-												.replace(/&amp;/g, "&")
-												.replace(/&nbsp;/g, " ")
-												.replace(/&lt;/g, "<")
-												.replace(/&gt;/g, ">");
+					var desc = escapePost(me.editable.html());
 					data['desc'] = desc;
 					break;
 				case 'photo':
@@ -2291,8 +2280,7 @@
 			core.api("/event/" + me.key, "GET", function(res) {
 				me.loading.hide();
 				if (res) {
-					me.descbody.html(res.description);
-					me.editable.html(me.convertAsEditable(me.descbody.html()));
+					me.descbody.html(unescapePost(res.description));
 					me.setDate(strptime(res.event_time, core.timezone));
 					if (res.photo)
 						me.setPhoto(res.photo);

@@ -265,34 +265,6 @@ class Journey(BaseModel):
     def owner(self):
         return self.key.parent()
     
-    def update(self, data):
-        if not data:
-            return
-        if 'title' in data:
-            self.title = escape(data['title'])
-        if 'desc' in data:
-            self.description = escape(data['desc'], link=True, br=True)
-        if 'bounds' in data:
-            ne = data['bounds']['ne']
-            ne = ndb.GeoPt(ne['lat'], ne['lng'])
-            sw = data['bounds']['sw']
-            sw = ndb.GeoPt(sw['lat'], sw['lng'])
-            #self.map_bounds = [ne, sw]
-        if 'center' in data:
-            center = data['center']
-            center = ndb.GeoPt(center['lat'], center['lng'])
-            self.map_center = center
-        if 'num_days' in data:
-            self.num_days = data['num_days']
-        if 'date_from' in data:
-            date_from = data['date_from']
-            self.date_from = datetime.strptime(date_from, DATE_FORMAT) if date_from else None
-        if 'permission' in data:
-            permission = data['permission']
-            if permission in PERMISSIONS.itervalues():
-                self.permission = permission
-        self.put()
-    
     def post_comment(self, uid, content):
         @ndb.transactional
         def do_transaction():
@@ -392,7 +364,7 @@ class Photo(BaseModel):
         if not data:
             return
         if 'desc' in data:
-            self.description = escape(data['desc'], link=True, br=True)
+            self.description = escape(data['desc'], link=True)
         self.put()
         
     def is_owner(self, uid):
@@ -451,7 +423,7 @@ class Comment(BaseModel):
     
     @staticmethod
     def post(parent_key, user_key, content):
-        content = escape(content, link=True, br=True)
+        content = escape(content, link=True)
         c = Comment(parent=parent_key, owner=user_key, content=content)
         c.put()
         return c
@@ -612,11 +584,14 @@ class Notification(BaseModel):
         return User
         
     def to_dict(self):
+        target = None
+        if self.target:
+            target = self.target.get()
         d = dict(
             id=self.id,
             msg_type=self.msg_type,
             user=self.user.get().to_dict(),
-            target = self.target.get().to_dict() if self.target else None,
+            target = target.to_dict() if target else None,
             read = self.read,
             seen = self.seen,
             created_time=self.created_time.strftime(DATETIME_FORMAT)
@@ -706,17 +681,12 @@ class Event(BaseModel):
                 )
         return d
 
-def escape(s, link=False, br=False):
-    s = s.rstrip().replace("&nbsp;", "\s")
-    if br:
-        s = re.sub("<br.*?>", "\n", s).strip()
+def escape(s, link=False):
     #Deprecated since python v3.2
     s = cgi.escape(s, quote=True)
-    if link:
-        s = _parse_link(s)
-    if br:
-        s = s.replace("\n", "<br />")
-    s = s.replace("\s", "&nbsp;")
+    s = s.replace("&amp;nbsp;", "&nbsp;")
+#    if link:
+#        s = _parse_link(s)
     return s
    
 def _parse_link(text):
